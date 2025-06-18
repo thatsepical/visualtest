@@ -73,36 +73,36 @@ toggleButton.MouseButton1Click:Connect(function()
 	mainFrame.Visible = not mainFrame.Visible
 end)
 
--- Header with improved layout
+-- Header with centered title and credit
 local header = Instance.new("Frame", mainFrame)
-header.Size = UDim2.new(1, 0, 0, 60)
+header.Size = UDim2.new(1, 0, 0, 70)
 header.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 header.BorderSizePixel = 0
 Instance.new("UICorner", header).CornerRadius = UDim.new(0, 8)
 
--- Title with better styling
+-- Centered Title
 local title = Instance.new("TextLabel", header)
 title.Text = "PET/SEED SPAWNER"
-title.Size = UDim2.new(1, -40, 0, 25)
-title.Position = UDim2.new(0, 10, 0, 5)
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Position = UDim2.new(0, 0, 0, 10)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 18
 title.TextColor3 = Color3.new(1, 1, 1)
 title.BackgroundTransparency = 1
-title.TextXAlignment = Enum.TextXAlignment.Left
+title.TextXAlignment = Enum.TextXAlignment.Center
 
--- Credit with better styling
+-- Centered Credit
 local credit = Instance.new("TextLabel", header)
 credit.Text = "by @zenxq"
-credit.Size = UDim2.new(1, -40, 0, 15)
-credit.Position = UDim2.new(0, 10, 0, 30)
+credit.Size = UDim2.new(1, 0, 0, 20)
+credit.Position = UDim2.new(0, 0, 0, 35)
 credit.Font = Enum.Font.Gotham
-credit.TextSize = 12
+credit.TextSize = 14
 credit.TextColor3 = Color3.new(0.8, 0.8, 0.8)
 credit.BackgroundTransparency = 1
-credit.TextXAlignment = Enum.TextXAlignment.Left
+credit.TextXAlignment = Enum.TextXAlignment.Center
 
--- Close Button with better position
+-- Close Button
 local closeBtn = Instance.new("TextButton", header)
 closeBtn.Size = UDim2.new(0, 25, 0, 25)
 closeBtn.Position = UDim2.new(1, -30, 0, 5)
@@ -119,7 +119,7 @@ tabContainer.Size = UDim2.new(1, -20, 0, 25)
 tabContainer.Position = UDim2.new(0, 10, 1, -30)
 tabContainer.BackgroundTransparency = 1
 
--- Tab Buttons with better styling
+-- Tab Buttons
 local petTab = Instance.new("TextButton", tabContainer)
 petTab.Text = "PETS"
 petTab.Size = UDim2.new(0.5, -5, 1, 0)
@@ -140,10 +140,10 @@ seedTab.TextSize = 14
 seedTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 Instance.new("UICorner", seedTab).CornerRadius = UDim.new(0, 6)
 
--- Tab Frames with better positioning
+-- Tab Frames
 local petTabFrame = Instance.new("Frame", mainFrame)
-petTabFrame.Position = UDim2.new(0, 0, 0, 60)
-petTabFrame.Size = UDim2.new(1, 0, 1, -60)
+petTabFrame.Position = UDim2.new(0, 0, 0, 70)
+petTabFrame.Size = UDim2.new(1, 0, 1, -70)
 petTabFrame.BackgroundTransparency = 1
 
 local seedTabFrame = petTabFrame:Clone()
@@ -278,9 +278,15 @@ spawnBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Dupe Pet Functionality
+-- Enhanced Dupe Logic with original animations
 dupeBtn.MouseButton1Click:Connect(function()
-    local tool = player.Character and player.Character:FindFirstChildOfClass("Tool") or backpack:FindFirstChildOfClass("Tool")
+    local player = game:GetService("Players").LocalPlayer
+    local backpack = player:WaitForChild("Backpack")
+    local char = player.Character or player.CharacterAdded:Wait()
+    
+    if not char then return end
+    
+    local tool = char:FindFirstChildOfClass("Tool") or backpack:FindFirstChildOfClass("Tool")
     if not tool then
         warn("No pet found equipped or in backpack")
         return
@@ -289,8 +295,15 @@ dupeBtn.MouseButton1Click:Connect(function()
     local fakeClone = tool:Clone()
     
     for _,v in pairs(fakeClone:GetDescendants()) do
-        if v:IsA("Script") and not v.Name:match("Animate|Animation|Animator|Grip|Control|Motor") then
-            v:Destroy()
+        if v:IsA("Script") or v:IsA("LocalScript") then
+            if not (v.Name:match("Animate")) 
+               and not (v.Name:match("Animation"))
+               and not (v.Name:match("Animator"))
+               and not (v.Name:match("Grip"))
+               and not (v.Name:match("Control"))
+               and not (v.Name:match("Motor")) then
+                v:Destroy()
+            end
         end
     end
 
@@ -299,13 +312,48 @@ dupeBtn.MouseButton1Click:Connect(function()
         if not humanoid:FindFirstChildOfClass("Animator") then
             Instance.new("Animator").Parent = humanoid
         end
+        
+        local originalHumanoid = tool:FindFirstChildOfClass("Humanoid")
+        if originalHumanoid and originalHumanoid:FindFirstChildOfClass("Animator") then
+            for _,track in pairs(originalHumanoid.Animator:GetPlayingAnimationTracks()) do
+                humanoid.Animator:LoadAnimation(track.Animation):Play()
+            end
+        end
+    else
+        local animateScript = tool:FindFirstChild("Animate") 
+        if animateScript then
+            animateScript:Clone().Parent = fakeClone
+        end
+        
+        for _,anim in pairs(tool:GetDescendants()) do
+            if anim:IsA("Animation") then
+                anim:Clone().Parent = fakeClone
+            end
+        end
     end
 
-    fakeClone.Parent = backpack
-    task.wait(0.2)
-    if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-        player.Character.Humanoid:EquipTool(fakeClone)
+    fakeClone.Enabled = true
+    fakeClone.ManualActivationOnly = false
+    fakeClone.RequiresHandle = true
+    
+    if fakeClone:FindFirstChild("CanBeDropped") then
+        fakeClone.CanBeDropped = false
     end
     
-    print("Created duplicate of: "..tool.Name)
+    fakeClone.Name = tool.Name
+    fakeClone.Parent = backpack
+
+    task.wait(0.2)
+    if char:FindFirstChildOfClass("Humanoid") then
+        char.Humanoid:EquipTool(fakeClone)
+        
+        task.wait(0.1)
+        if fakeClone:FindFirstChildOfClass("Humanoid") then
+            for _,track in pairs(fakeClone.Humanoid.Animator:GetPlayingAnimationTracks()) do
+                track:Play()
+            end
+        end
+    end
+    
+    print("Created animated duplicate of: "..tool.Name)
 end)
