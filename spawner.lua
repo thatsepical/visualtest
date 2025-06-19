@@ -37,8 +37,8 @@ Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0, 6)
 
 -- Main Frame
 local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Size = UDim2.new(0, 280, 0, 320)
-mainFrame.Position = UDim2.new(0.5, -140, 0.5, -160)
+mainFrame.Size = UDim2.new(0, 280, 0, 350) -- Slightly taller to accommodate header
+mainFrame.Position = UDim2.new(0.5, -140, 0.5, -175)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
@@ -73,14 +73,14 @@ toggleButton.MouseButton1Click:Connect(function()
 	mainFrame.Visible = not mainFrame.Visible
 end)
 
--- Header with centered title and credit
+-- Header with proper spacing
 local header = Instance.new("Frame", mainFrame)
-header.Size = UDim2.new(1, 0, 0, 70)
+header.Size = UDim2.new(1, 0, 0, 90) -- Taller header
 header.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 header.BorderSizePixel = 0
 Instance.new("UICorner", header).CornerRadius = UDim.new(0, 8)
 
--- Centered Title
+-- Title (centered)
 local title = Instance.new("TextLabel", header)
 title.Text = "PET/SEED SPAWNER"
 title.Size = UDim2.new(1, 0, 0, 30)
@@ -91,11 +91,11 @@ title.TextColor3 = Color3.new(1, 1, 1)
 title.BackgroundTransparency = 1
 title.TextXAlignment = Enum.TextXAlignment.Center
 
--- Centered Credit
+-- Credit (centered below title)
 local credit = Instance.new("TextLabel", header)
 credit.Text = "by @zenxq"
 credit.Size = UDim2.new(1, 0, 0, 20)
-credit.Position = UDim2.new(0, 0, 0, 35)
+credit.Position = UDim2.new(0, 0, 0, 40)
 credit.Font = Enum.Font.Gotham
 credit.TextSize = 14
 credit.TextColor3 = Color3.new(0.8, 0.8, 0.8)
@@ -113,10 +113,10 @@ closeBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
 closeBtn.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
 
--- Tab Buttons Container
+-- Tab Buttons Container (positioned lower)
 local tabContainer = Instance.new("Frame", header)
-tabContainer.Size = UDim2.new(1, -20, 0, 25)
-tabContainer.Position = UDim2.new(0, 10, 1, -30)
+tabContainer.Size = UDim2.new(1, -20, 0, 30)
+tabContainer.Position = UDim2.new(0, 10, 0, 60) -- Positioned below credit
 tabContainer.BackgroundTransparency = 1
 
 -- Tab Buttons
@@ -142,8 +142,8 @@ Instance.new("UICorner", seedTab).CornerRadius = UDim.new(0, 6)
 
 -- Tab Frames
 local petTabFrame = Instance.new("Frame", mainFrame)
-petTabFrame.Position = UDim2.new(0, 0, 0, 70)
-petTabFrame.Size = UDim2.new(1, 0, 1, -70)
+petTabFrame.Position = UDim2.new(0, 0, 0, 90) -- Adjusted for taller header
+petTabFrame.Size = UDim2.new(1, 0, 1, -90)
 petTabFrame.BackgroundTransparency = 1
 
 local seedTabFrame = petTabFrame:Clone()
@@ -278,7 +278,7 @@ spawnBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Enhanced Dupe Logic with original animations
+-- Dupe Pet Functionality with animations
 dupeBtn.MouseButton1Click:Connect(function()
     local player = game:GetService("Players").LocalPlayer
     local backpack = player:WaitForChild("Backpack")
