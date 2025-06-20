@@ -69,10 +69,20 @@ header.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 header.BorderSizePixel = 0
 Instance.new("UICorner", header).CornerRadius = UDim.new(0, 8)
 
+local versionText = Instance.new("TextLabel", header)
+versionText.Text = "v1.2.0"
+versionText.Size = UDim2.new(0, 40, 0, 12)
+versionText.Position = UDim2.new(0, 5, 0, 5)
+versionText.Font = Enum.Font.SourceSans
+versionText.TextSize = 10
+versionText.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+versionText.BackgroundTransparency = 1
+versionText.TextXAlignment = Enum.TextXAlignment.Left
+
 local title = Instance.new("TextLabel", header)
 title.Text = "PET/SEED SPAWNER"
-title.Size = UDim2.new(1, 0, 0, 20)
-title.Position = UDim2.new(0, 0, 0, 5)
+title.Size = UDim2.new(1, -50, 0, 20)
+title.Position = UDim2.new(0, 45, 0, 5)
 title.Font = Enum.Font.SourceSansBold
 title.TextSize = 16
 title.TextColor3 = Color3.new(1, 1, 1)
