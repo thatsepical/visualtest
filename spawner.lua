@@ -1,39 +1,53 @@
+-- Grow a Garden Pet Spawner UI
+-- PC and Mobile compatible
+-- Strictly uses only the GitHub pet spawner module
+
 local player = game:GetService("Players").LocalPlayer
 local backpack = player:WaitForChild("Backpack")
 local playerGui = player:WaitForChild("PlayerGui")
 local UIS = game:GetService("UserInputService")
 
--- Load Spawner module with retry logic
+-- Enhanced module loader with retry logic
 local Spawner
-local success, err = pcall(function()
-    for i = 1, 3 do  -- Try 3 times to load the module
-        local moduleSuccess, module = pcall(function()
+local function loadSpawner()
+    local attempts = 0
+    local maxAttempts = 3
+    
+    while attempts < maxAttempts do
+        local success, result = pcall(function()
             return loadstring(game:HttpGet("https://raw.githubusercontent.com/ataturk123/GardenSpawner/refs/heads/main/Spawner.lua", true))()
         end)
-        if moduleSuccess then
-            Spawner = module
-            break
+        
+        if success then
+            return result
         else
-            if i == 3 then error("Failed after 3 attempts: "..tostring(module)) end
-            task.wait(1) -- Wait before retrying
+            attempts = attempts + 1
+            warn("Spawner load attempt "..attempts.." failed: "..tostring(result))
+            if attempts < maxAttempts then
+                task.wait(1) -- Wait before retrying
+            end
         end
     end
-end)
-
-if not success then
-    warn("Failed to load Spawner module: "..tostring(err))
-    return -- Stop script if spawner can't load
+    error("Failed to load Spawner after "..maxAttempts.." attempts")
 end
+
+-- Load the spawner or terminate if failed
+local success, err = pcall(loadSpawner)
+if not success then
+    warn("CRITICAL ERROR: "..tostring(err))
+    return
+end
+Spawner = success
 
 -- UI Setup
 local screenGui = Instance.new("ScreenGui", playerGui)
 screenGui.Name = "PetSpawnerUI"
 screenGui.ResetOnSpawn = false
 
--- Adjust UI scale for PC
 local isPC = UIS.MouseEnabled
 local uiScale = isPC and 1.15 or 1
 
+-- Toggle Button
 local toggleButton = Instance.new("TextButton", screenGui)
 toggleButton.Size = UDim2.new(0, 80 * uiScale, 0, 25 * uiScale)
 toggleButton.Position = UDim2.new(0, 10, 0, 10)
@@ -44,6 +58,7 @@ toggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 toggleButton.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0, 6)
 
+-- Main Frame
 local mainFrame = Instance.new("Frame", screenGui)
 mainFrame.Size = UDim2.new(0, 250 * uiScale, 0, 280 * uiScale)
 mainFrame.Position = UDim2.new(0.5, -125 * uiScale, 0.5, -140 * uiScale)
@@ -54,22 +69,25 @@ mainFrame.Visible = false
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
 
 -- Dragging functionality
-local dragging, dragStart, startPos
+local dragging, dragInput, dragStart, startPos
 mainFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
         startPos = mainFrame.Position
-        input.Changed:Connect(function()
+        
+        local connection
+        connection = input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
                 dragging = false
+                connection:Disconnect()
             end
         end)
     end
 end)
 
 UIS.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+    if dragging and (input == dragInput or input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local delta = input.Position - dragStart
         mainFrame.Position = UDim2.new(
             startPos.X.Scale, startPos.X.Offset + delta.X,
@@ -78,6 +96,7 @@ UIS.InputChanged:Connect(function(input)
     end
 end)
 
+-- Toggle visibility
 toggleButton.MouseButton1Click:Connect(function()
     mainFrame.Visible = not mainFrame.Visible
 end)
@@ -136,7 +155,7 @@ closeBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 closeBtn.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
 
--- Tab frames
+-- Tab Frames
 local petTabFrame = Instance.new("Frame", mainFrame)
 petTabFrame.Position = UDim2.new(0, 0, 0, 55)
 petTabFrame.Size = UDim2.new(1, 0, 1, -55)
@@ -162,11 +181,12 @@ local function createTextBox(parent, placeholder, position)
     return box
 end
 
+-- Pet tab inputs
 local petNameBox = createTextBox(petTabFrame, "Pet Name", UDim2.new(0.05, 0, 0.05, 0))
 local weightBox = createTextBox(petTabFrame, "Weight", UDim2.new(0.05, 0, 0.25, 0))
 local ageBox = createTextBox(petTabFrame, "Age", UDim2.new(0.05, 0, 0.45, 0))
 
--- Input validation
+-- Decimal input validation
 local function validateDecimalInput(textBox)
     textBox:GetPropertyChangedSignal("Text"):Connect(function()
         local newText = textBox.Text:gsub("[^%d.]", "")
@@ -205,7 +225,7 @@ end
 local spawnBtn = createButton(petTabFrame, "SPAWN PET", 0.65)
 local dupeBtn = createButton(petTabFrame, "DUPE PET", 0.8)
 
--- Seed buttons
+-- Seed tab setup
 local seedScroll = Instance.new("ScrollingFrame", seedTabFrame)
 seedScroll.Size = UDim2.new(1, 0, 1, 0)
 seedScroll.BackgroundTransparency = 1
@@ -260,11 +280,12 @@ seedTab.MouseButton1Click:Connect(function()
     seedTabFrame.Visible = true
 end)
 
+-- Close button
 closeBtn.MouseButton1Click:Connect(function()
     mainFrame.Visible = false
 end)
 
--- Spawn function
+-- Spawn pet function
 spawnBtn.MouseButton1Click:Connect(function()
     local petName = petNameBox.Text
     local petWeight = tonumber(weightBox.Text) or 1
@@ -275,21 +296,22 @@ spawnBtn.MouseButton1Click:Connect(function()
         return
     end
 
-    -- PC-specific pre-spawn checks
-    if isPC then
-        -- Ensure character exists
-        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
-            player:LoadCharacter()
-            task.wait(1) -- Wait for character to load
+    -- Strictly use only the spawner module
+    local success, result = pcall(function()
+        -- PC-specific pre-spawn checks
+        if isPC then
+            -- Ensure character exists
+            if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+                player:LoadCharacter()
+                task.wait(1)
+            end
+            
+            -- Ensure backpack is ready
+            if not backpack then
+                backpack = player:WaitForChild("Backpack")
+            end
         end
         
-        -- Ensure backpack is ready
-        if not backpack then
-            backpack = player:WaitForChild("Backpack")
-        end
-    end
-
-    local success, result = pcall(function()
         return Spawner.SpawnPet(petName, petWeight, petAge)
     end)
     
@@ -308,9 +330,12 @@ spawnBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Dupe function (unchanged)
+-- Dupe pet function (unchanged from original)
 dupeBtn.MouseButton1Click:Connect(function()
+    local player = game:GetService("Players").LocalPlayer
+    local backpack = player:WaitForChild("Backpack")
     local char = player.Character or player.CharacterAdded:Wait()
+    
     if not char then return end
     
     local tool = char:FindFirstChildOfClass("Tool") or backpack:FindFirstChildOfClass("Tool")
