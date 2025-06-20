@@ -1,8 +1,15 @@
+-- Pet/Spawner UI Script
+-- Cleaned and optimized version with the requested fix
+
 local player = game:GetService("Players").LocalPlayer
 local backpack = player:WaitForChild("Backpack")
 local playerGui = player:WaitForChild("PlayerGui")
 local UIS = game:GetService("UserInputService")
 
+-- Add the requested fix
+getgenv().Executed = nil
+
+-- Load Spawner module with fallback
 local Spawner
 local success, err = pcall(function()
     Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ataturk123/GardenSpawner/refs/heads/main/Spawner.lua", true))()
@@ -24,32 +31,61 @@ if not success then
     }
 end
 
-local screenGui = Instance.new("ScreenGui", playerGui)
-screenGui.Name = "PetSpawnerUI"
-screenGui.ResetOnSpawn = false
+-- UI Creation Functions
+local function createInstance(className, props)
+    local instance = Instance.new(className)
+    for prop, value in pairs(props) do
+        instance[prop] = value
+    end
+    return instance
+end
+
+local function createUICorner(parent, radius)
+    local corner = createInstance("UICorner", {
+        Parent = parent,
+        CornerRadius = UDim.new(0, radius or 6)
+    })
+    return corner
+end
+
+-- Create main UI elements
+local screenGui = createInstance("ScreenGui", {
+    Name = "PetSpawnerUI",
+    Parent = playerGui,
+    ResetOnSpawn = false
+})
 
 local isPC = UIS.MouseEnabled
 local uiScale = isPC and 1.15 or 1
 
-local toggleButton = Instance.new("TextButton", screenGui)
-toggleButton.Size = UDim2.new(0, 80 * uiScale, 0, 25 * uiScale)
-toggleButton.Position = UDim2.new(0, 10, 0, 10)
-toggleButton.Text = "Open UI"
-toggleButton.Font = Enum.Font.SourceSans
-toggleButton.TextSize = 14
-toggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-toggleButton.TextColor3 = Color3.new(1, 1, 1)
-Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0, 6)
+-- Toggle button
+local toggleButton = createInstance("TextButton", {
+    Name = "ToggleButton",
+    Parent = screenGui,
+    Size = UDim2.new(0, 80 * uiScale, 0, 25 * uiScale),
+    Position = UDim2.new(0, 10, 0, 10),
+    Text = "Open UI",
+    Font = Enum.Font.SourceSans,
+    TextSize = 14,
+    BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+    TextColor3 = Color3.new(1, 1, 1)
+})
+createUICorner(toggleButton)
 
-local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Size = UDim2.new(0, 250 * uiScale, 0, 280 * uiScale)
-mainFrame.Position = UDim2.new(0.5, -125 * uiScale, 0.5, -140 * uiScale)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-mainFrame.BorderSizePixel = 0
-mainFrame.Active = true
-mainFrame.Visible = false
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
+-- Main frame
+local mainFrame = createInstance("Frame", {
+    Name = "MainFrame",
+    Parent = screenGui,
+    Size = UDim2.new(0, 250 * uiScale, 0, 280 * uiScale),
+    Position = UDim2.new(0.5, -125 * uiScale, 0.5, -140 * uiScale),
+    BackgroundColor3 = Color3.fromRGB(20, 20, 20),
+    BorderSizePixel = 0,
+    Active = true,
+    Visible = false
+})
+createUICorner(mainFrame, 8)
 
+-- Dragging functionality
 local dragging, dragInput, dragStart, startPos
 mainFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -81,99 +117,134 @@ toggleButton.MouseButton1Click:Connect(function()
     mainFrame.Visible = not mainFrame.Visible
 end)
 
-local header = Instance.new("Frame", mainFrame)
-header.Size = UDim2.new(1, 0, 0, 40)
-header.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-header.BorderSizePixel = 0
-Instance.new("UICorner", header).CornerRadius = UDim.new(0, 8)
+-- Header section
+local header = createInstance("Frame", {
+    Name = "Header",
+    Parent = mainFrame,
+    Size = UDim2.new(1, 0, 0, 40),
+    BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+    BorderSizePixel = 0
+})
+createUICorner(header, 8)
 
-local title = Instance.new("TextLabel", header)
-title.Text = "PET/SEED SPAWNER"
-title.Size = UDim2.new(1, 0, 0, 20)
-title.Position = UDim2.new(0, 0, 0, 5)
-title.Font = Enum.Font.SourceSansBold
-title.TextSize = 16
-title.TextColor3 = Color3.new(1, 1, 1)
-title.BackgroundTransparency = 1
+local title = createInstance("TextLabel", {
+    Name = "Title",
+    Parent = header,
+    Text = "PET/SEED SPAWNER",
+    Size = UDim2.new(1, 0, 0, 20),
+    Position = UDim2.new(0, 0, 0, 5),
+    Font = Enum.Font.SourceSansBold,
+    TextSize = 16,
+    TextColor3 = Color3.new(1, 1, 1),
+    BackgroundTransparency = 1
+})
 
-local credit = Instance.new("TextLabel", header)
-credit.Text = "by @zenxq"
-credit.Size = UDim2.new(1, 0, 0, 12)
-credit.Position = UDim2.new(0, 0, 0, 22)
-credit.Font = Enum.Font.SourceSans
-credit.TextSize = 10
-credit.TextColor3 = Color3.new(0.8, 0.8, 0.8)
-credit.BackgroundTransparency = 1
+local credit = createInstance("TextLabel", {
+    Name = "Credit",
+    Parent = header,
+    Text = "by @zenxq",
+    Size = UDim2.new(1, 0, 0, 12),
+    Position = UDim2.new(0, 0, 0, 22),
+    Font = Enum.Font.SourceSans,
+    TextSize = 10,
+    TextColor3 = Color3.new(0.8, 0.8, 0.8),
+    BackgroundTransparency = 1
+})
 
-local tabBackground = Instance.new("Frame", header)
-tabBackground.Size = UDim2.new(1, 0, 0, 20)
-tabBackground.Position = UDim2.new(0, 0, 0, 35)
-tabBackground.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-tabBackground.BorderSizePixel = 0
-Instance.new("UICorner", tabBackground).CornerRadius = UDim.new(0, 4)
+-- Tab system
+local tabBackground = createInstance("Frame", {
+    Name = "TabBackground",
+    Parent = header,
+    Size = UDim2.new(1, 0, 0, 20),
+    Position = UDim2.new(0, 0, 0, 35),
+    BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+    BorderSizePixel = 0
+})
+createUICorner(tabBackground, 4)
 
-local petTab = Instance.new("TextButton", tabBackground)
-petTab.Text = "PET"
-petTab.Size = UDim2.new(0.5, -2, 1, 0)
-petTab.Position = UDim2.new(0, 0, 0, 0)
-petTab.Font = Enum.Font.SourceSans
-petTab.TextColor3 = Color3.new(1, 1, 1)
-petTab.TextSize = 14
-petTab.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-petTab.BorderSizePixel = 0
-Instance.new("UICorner", petTab).CornerRadius = UDim.new(0, 4)
+local petTab = createInstance("TextButton", {
+    Name = "PetTab",
+    Parent = tabBackground,
+    Text = "PET",
+    Size = UDim2.new(0.5, -2, 1, 0),
+    Position = UDim2.new(0, 0, 0, 0),
+    Font = Enum.Font.SourceSans,
+    TextColor3 = Color3.new(1, 1, 1),
+    TextSize = 14,
+    BackgroundColor3 = Color3.fromRGB(70, 70, 70),
+    BorderSizePixel = 0
+})
+createUICorner(petTab, 4)
 
-local seedTab = Instance.new("TextButton", tabBackground)
-seedTab.Text = "SEED"
-seedTab.Size = UDim2.new(0.5, -2, 1, 0)
-seedTab.Position = UDim2.new(0.5, 0, 0, 0)
-seedTab.Font = Enum.Font.SourceSans
-seedTab.TextColor3 = Color3.new(1, 1, 1)
-seedTab.TextSize = 14
-seedTab.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-seedTab.BorderSizePixel = 0
-Instance.new("UICorner", seedTab).CornerRadius = UDim.new(0, 4)
+local seedTab = createInstance("TextButton", {
+    Name = "SeedTab",
+    Parent = tabBackground,
+    Text = "SEED",
+    Size = UDim2.new(0.5, -2, 1, 0),
+    Position = UDim2.new(0.5, 0, 0, 0),
+    Font = Enum.Font.SourceSans,
+    TextColor3 = Color3.new(1, 1, 1),
+    TextSize = 14,
+    BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+    BorderSizePixel = 0
+})
+createUICorner(seedTab, 4)
 
-local closeBtn = Instance.new("TextButton", header)
-closeBtn.Size = UDim2.new(0, 25, 0, 25)
-closeBtn.Position = UDim2.new(1, -30, 0, 5)
-closeBtn.Text = "X"
-closeBtn.Font = Enum.Font.SourceSans
-closeBtn.TextSize = 16
-closeBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-closeBtn.TextColor3 = Color3.new(1, 1, 1)
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
+local closeBtn = createInstance("TextButton", {
+    Name = "CloseButton",
+    Parent = header,
+    Size = UDim2.new(0, 25, 0, 25),
+    Position = UDim2.new(1, -30, 0, 5),
+    Text = "X",
+    Font = Enum.Font.SourceSans,
+    TextSize = 16,
+    BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+    TextColor3 = Color3.new(1, 1, 1)
+})
+createUICorner(closeBtn)
 
-local petTabFrame = Instance.new("Frame", mainFrame)
-petTabFrame.Position = UDim2.new(0, 0, 0, 55)
-petTabFrame.Size = UDim2.new(1, 0, 1, -55)
-petTabFrame.BackgroundTransparency = 1
+-- Tab frames
+local petTabFrame = createInstance("Frame", {
+    Name = "PetTabFrame",
+    Parent = mainFrame,
+    Position = UDim2.new(0, 0, 0, 55),
+    Size = UDim2.new(1, 0, 1, -55),
+    BackgroundTransparency = 1
+})
 
-local seedTabFrame = Instance.new("Frame", mainFrame)
-seedTabFrame.Position = UDim2.new(0, 0, 0, 55)
-seedTabFrame.Size = UDim2.new(1, 0, 1, -55)
-seedTabFrame.BackgroundTransparency = 1
-seedTabFrame.Visible = false
+local seedTabFrame = createInstance("Frame", {
+    Name = "SeedTabFrame",
+    Parent = mainFrame,
+    Position = UDim2.new(0, 0, 0, 55),
+    Size = UDim2.new(1, 0, 1, -55),
+    BackgroundTransparency = 1,
+    Visible = false
+})
 
+-- Text box creation function
 local function createTextBox(parent, placeholder, position)
-    local box = Instance.new("TextBox", parent)
-    box.Size = UDim2.new(0.9, 0, 0, 25)
-    box.Position = position
-    box.PlaceholderText = placeholder
-    box.Text = ""
-    box.Font = Enum.Font.SourceSans
-    box.TextSize = 14
-    box.TextColor3 = Color3.new(1, 1, 1)
-    box.PlaceholderColor3 = Color3.fromRGB(200, 200, 200)
-    box.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
-    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 5)
+    local box = createInstance("TextBox", {
+        Parent = parent,
+        Size = UDim2.new(0.9, 0, 0, 25),
+        Position = position,
+        PlaceholderText = placeholder,
+        Text = "",
+        Font = Enum.Font.SourceSans,
+        TextSize = 14,
+        TextColor3 = Color3.new(1, 1, 1),
+        PlaceholderColor3 = Color3.fromRGB(200, 200, 200),
+        BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+    })
+    createUICorner(box, 5)
     return box
 end
 
+-- Pet tab inputs
 local petNameBox = createTextBox(petTabFrame, "Pet Name", UDim2.new(0.05, 0, 0.05, 0))
 local weightBox = createTextBox(petTabFrame, "Weight", UDim2.new(0.05, 0, 0.25, 0))
 local ageBox = createTextBox(petTabFrame, "Age", UDim2.new(0.05, 0, 0.45, 0))
 
+-- Input validation
 local function validateDecimalInput(textBox)
     textBox:GetPropertyChangedSignal("Text"):Connect(function()
         local newText = textBox.Text:gsub("[^%d.]", "")
@@ -195,47 +266,60 @@ end
 validateDecimalInput(weightBox)
 validateDecimalInput(ageBox)
 
+-- Button creation function
 local function createButton(parent, text, posY)
-    local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(0.9, 0, 0, 25)
-    btn.Position = UDim2.new(0.05, 0, posY, 0)
-    btn.Text = text
-    btn.Font = Enum.Font.SourceSans
-    btn.TextSize = 14
-    btn.TextColor3 = Color3.new(1, 1, 1)
-    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    local btn = createInstance("TextButton", {
+        Parent = parent,
+        Size = UDim2.new(0.9, 0, 0, 25),
+        Position = UDim2.new(0.05, 0, posY, 0),
+        Text = text,
+        Font = Enum.Font.SourceSans,
+        TextSize = 14,
+        TextColor3 = Color3.new(1, 1, 1),
+        BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    })
+    createUICorner(btn)
     return btn
 end
 
+-- Pet tab buttons
 local spawnBtn = createButton(petTabFrame, "SPAWN PET", 0.65)
 local dupeBtn = createButton(petTabFrame, "DUPE PET", 0.8)
 
-local seedScroll = Instance.new("ScrollingFrame", seedTabFrame)
-seedScroll.Size = UDim2.new(1, 0, 1, 0)
-seedScroll.BackgroundTransparency = 1
-seedScroll.ScrollBarThickness = 6
-seedScroll.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
-seedScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+-- Seed tab scroll frame
+local seedScroll = createInstance("ScrollingFrame", {
+    Name = "SeedScroll",
+    Parent = seedTabFrame,
+    Size = UDim2.new(1, 0, 1, 0),
+    BackgroundTransparency = 1,
+    ScrollBarThickness = 6,
+    ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100),
+    CanvasSize = UDim2.new(0, 0, 0, 0)
+})
 
-local seedListLayout = Instance.new("UIListLayout", seedScroll)
-seedListLayout.Padding = UDim.new(0, 5)
-seedListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+local seedListLayout = createInstance("UIListLayout", {
+    Parent = seedScroll,
+    Padding = UDim.new(0, 5),
+    SortOrder = Enum.SortOrder.LayoutOrder
+})
 
 seedListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     seedScroll.CanvasSize = UDim2.new(0, 0, 0, seedListLayout.AbsoluteContentSize.Y + 10)
 end)
 
-local seedButtonTemplate = Instance.new("TextButton")
-seedButtonTemplate.Size = UDim2.new(0.9, 0, 0, 30)
-seedButtonTemplate.Position = UDim2.new(0.05, 0, 0, 0)
-seedButtonTemplate.Font = Enum.Font.SourceSans
-seedButtonTemplate.TextSize = 14
-seedButtonTemplate.TextColor3 = Color3.new(1, 1, 1)
-seedButtonTemplate.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-seedButtonTemplate.AutoButtonColor = true
-Instance.new("UICorner", seedButtonTemplate).CornerRadius = UDim.new(0, 6)
+-- Seed button template
+local seedButtonTemplate = createInstance("TextButton", {
+    Size = UDim2.new(0.9, 0, 0, 30),
+    Position = UDim2.new(0.05, 0, 0, 0),
+    Font = Enum.Font.SourceSans,
+    TextSize = 14,
+    TextColor3 = Color3.new(1, 1, 1),
+    BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+    AutoButtonColor = true
+})
+createUICorner(seedButtonTemplate)
 
+-- Seed buttons setup
 local function setupSeedButtons()
     local seedNames = Spawner.GetSeeds() or {"Candy Blossom", "Sunflower", "Moonflower"}
     
@@ -271,6 +355,7 @@ end
 
 setupSeedButtons()
 
+-- Tab switching
 local function switchToTab(tab)
     if tab == "pet" then
         petTabFrame.Visible = true
@@ -297,6 +382,7 @@ closeBtn.MouseButton1Click:Connect(function()
     mainFrame.Visible = false
 end)
 
+-- Spawn pet functionality
 spawnBtn.MouseButton1Click:Connect(function()
     local petName = petNameBox.Text
     local petWeight = tonumber(weightBox.Text) or 1
@@ -329,6 +415,7 @@ spawnBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+-- Dupe pet functionality
 dupeBtn.MouseButton1Click:Connect(function()
     local tool = player.Character and player.Character:FindFirstChildOfClass("Tool") or backpack:FindFirstChildOfClass("Tool")
     
@@ -339,6 +426,7 @@ dupeBtn.MouseButton1Click:Connect(function()
 
     local fakeClone = tool:Clone()
     
+    -- Clean up unnecessary scripts
     for _,v in pairs(fakeClone:GetDescendants()) do
         if v:IsA("Script") or v:IsA("LocalScript") then
             if not (v.Name:match("Animate")) 
@@ -352,6 +440,7 @@ dupeBtn.MouseButton1Click:Connect(function()
         end
     end
 
+    -- Handle animations
     if fakeClone:FindFirstChildOfClass("Humanoid") then
         local humanoid = fakeClone:FindFirstChildOfClass("Humanoid")
         if not humanoid:FindFirstChildOfClass("Animator") then
@@ -377,6 +466,7 @@ dupeBtn.MouseButton1Click:Connect(function()
         end
     end
 
+    -- Configure clone properties
     fakeClone.Enabled = true
     fakeClone.ManualActivationOnly = false
     fakeClone.RequiresHandle = true
@@ -388,6 +478,7 @@ dupeBtn.MouseButton1Click:Connect(function()
     fakeClone.Name = tool.Name
     fakeClone.Parent = backpack
 
+    -- Equip and animate
     task.wait(0.2)
     if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
         player.Character.Humanoid:EquipTool(fakeClone)
@@ -403,4 +494,5 @@ dupeBtn.MouseButton1Click:Connect(function()
     print("Created animated duplicate of: "..tool.Name)
 end)
 
+-- Initialize UI
 switchToTab("pet")
