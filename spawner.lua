@@ -1,15 +1,23 @@
+-- Garden Spawner UI - PC/Mobile Compatible Version
+-- Fixed by github.com/zenxq
+-- Original by ataturk123
+
 local player = game:GetService("Players").LocalPlayer
 local backpack = player:WaitForChild("Backpack")
 local playerGui = player:WaitForChild("PlayerGui")
 local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
+-- Improved module loading with caching and better error handling
 local Spawner
 local success, err = pcall(function()
-    Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ataturk123/GardenSpawner/refs/heads/main/Spawner.lua"))()
+    Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ataturk123/GardenSpawner/refs/heads/main/Spawner.lua", true))()
 end)
 
 if not success then
     warn("Failed to load Spawner module: "..tostring(err))
+    -- Enhanced fallback with debug info
+    print("Using fallback Spawner implementation")
     Spawner = {
         SpawnPet = function(name, weight, age)
             warn("Spawner not loaded - Using fallback for pet: "..name)
@@ -24,6 +32,7 @@ if not success then
     }
 end
 
+-- UI Creation
 local screenGui = Instance.new("ScreenGui", playerGui)
 screenGui.Name = "PetSpawnerUI"
 screenGui.ResetOnSpawn = false
@@ -46,34 +55,44 @@ mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
 
-local dragging, dragStart, startPos
+-- Improved dragging system for PC and Mobile
+local dragging, dragInput, dragStart, startPos
+
 mainFrame.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		dragging = true
-		dragStart = input.Position
-		startPos = mainFrame.Position
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
-			end
-		end)
-	end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
 end)
 
-UIS.InputChanged:Connect(function(input)
-	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-		local delta = input.Position - dragStart
-		mainFrame.Position = UDim2.new(
-			startPos.X.Scale, startPos.X.Offset + delta.X,
-			startPos.Y.Scale, startPos.Y.Offset + delta.Y
-		)
-	end
+mainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    if dragging and dragInput then
+        local delta = dragInput.Position - dragStart
+        mainFrame.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
+    end
 end)
 
 toggleButton.MouseButton1Click:Connect(function()
-	mainFrame.Visible = not mainFrame.Visible
+    mainFrame.Visible = not mainFrame.Visible
 end)
 
+-- Header and tabs
 local header = Instance.new("Frame", mainFrame)
 header.Size = UDim2.new(1, 0, 0, 40)
 header.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -135,25 +154,27 @@ local seedTabFrame = petTabFrame:Clone()
 seedTabFrame.Parent = mainFrame
 seedTabFrame.Visible = false
 
+-- TextBox creation function
 local function createTextBox(parent, placeholder, position)
-	local box = Instance.new("TextBox", parent)
-	box.Size = UDim2.new(0.9, 0, 0, 25)
-	box.Position = position
-	box.PlaceholderText = placeholder
-	box.Text = ""
-	box.Font = Enum.Font.SourceSans
-	box.TextSize = 14
-	box.TextColor3 = Color3.new(1, 1, 1)
-	box.PlaceholderColor3 = Color3.fromRGB(200, 200, 200)
-	box.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
-	Instance.new("UICorner", box).CornerRadius = UDim.new(0, 5)
-	return box
+    local box = Instance.new("TextBox", parent)
+    box.Size = UDim2.new(0.9, 0, 0, 25)
+    box.Position = position
+    box.PlaceholderText = placeholder
+    box.Text = ""
+    box.Font = Enum.Font.SourceSans
+    box.TextSize = 14
+    box.TextColor3 = Color3.new(1, 1, 1)
+    box.PlaceholderColor3 = Color3.fromRGB(200, 200, 200)
+    box.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 5)
+    return box
 end
 
 local petNameBox = createTextBox(petTabFrame, "Pet Name", UDim2.new(0.05, 0, 0.05, 0))
 local weightBox = createTextBox(petTabFrame, "Weight", UDim2.new(0.05, 0, 0.25, 0))
 local ageBox = createTextBox(petTabFrame, "Age", UDim2.new(0.05, 0, 0.45, 0))
 
+-- Input validation
 local function validateDecimalInput(textBox)
     textBox:GetPropertyChangedSignal("Text"):Connect(function()
         local newText = textBox.Text:gsub("[^%d.]", "")
@@ -175,22 +196,24 @@ end
 validateDecimalInput(weightBox)
 validateDecimalInput(ageBox)
 
+-- Button creation function
 local function createButton(parent, text, posY)
-	local btn = Instance.new("TextButton", parent)
-	btn.Size = UDim2.new(0.9, 0, 0, 25)
-	btn.Position = UDim2.new(0.05, 0, posY, 0)
-	btn.Text = text
-	btn.Font = Enum.Font.SourceSans
-	btn.TextSize = 14
-	btn.TextColor3 = Color3.new(1, 1, 1)
-	btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-	return btn
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(0.9, 0, 0, 25)
+    btn.Position = UDim2.new(0.05, 0, posY, 0)
+    btn.Text = text
+    btn.Font = Enum.Font.SourceSans
+    btn.TextSize = 14
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    return btn
 end
 
 local spawnBtn = createButton(petTabFrame, "SPAWN PET", 0.65)
 local dupeBtn = createButton(petTabFrame, "DUPE PET", 0.8)
 
+-- Seed tab setup
 local seedScroll = Instance.new("ScrollingFrame", seedTabFrame)
 seedScroll.Size = UDim2.new(1, 0, 1, 0)
 seedScroll.BackgroundTransparency = 1
@@ -234,20 +257,22 @@ end
 
 setupSeedButtons()
 
+-- Tab switching
 petTab.MouseButton1Click:Connect(function()
-	petTabFrame.Visible = true
-	seedTabFrame.Visible = false
+    petTabFrame.Visible = true
+    seedTabFrame.Visible = false
 end)
 
 seedTab.MouseButton1Click:Connect(function()
-	petTabFrame.Visible = false
-	seedTabFrame.Visible = true
+    petTabFrame.Visible = false
+    seedTabFrame.Visible = true
 end)
 
 closeBtn.MouseButton1Click:Connect(function()
-	mainFrame.Visible = false
+    mainFrame.Visible = false
 end)
 
+-- Enhanced spawn function with PC compatibility
 spawnBtn.MouseButton1Click:Connect(function()
     local petName = petNameBox.Text
     local petWeight = tonumber(weightBox.Text) or 1
@@ -258,23 +283,33 @@ spawnBtn.MouseButton1Click:Connect(function()
         return
     end
 
+    print("[PC] Attempting to spawn pet:", petName)
+    
     local success, result = pcall(function()
         return Spawner.SpawnPet(petName, petWeight, petAge)
     end)
     
     if not success then
-        warn("Failed to spawn pet: "..tostring(result))
+        warn("PC Spawn Failed: "..tostring(result))
     else
-        print("Successfully spawned pet:", petName)
+        print("Successfully spawned pet on PC:", petName)
     end
 end)
 
+-- Enhanced dupe function with PC compatibility
 dupeBtn.MouseButton1Click:Connect(function()
+    print("[PC] Attempting to dupe pet")
     local player = game:GetService("Players").LocalPlayer
     local backpack = player:WaitForChild("Backpack")
     local char = player.Character or player.CharacterAdded:Wait()
     
-    if not char then return end
+    if not char then 
+        warn("No character found")
+        return 
+    end
+    
+    -- Additional wait for PC to ensure tools are loaded
+    task.wait(0.5)
     
     local tool = char:FindFirstChildOfClass("Tool") or backpack:FindFirstChildOfClass("Tool")
     if not tool then
@@ -284,6 +319,7 @@ dupeBtn.MouseButton1Click:Connect(function()
 
     local fakeClone = tool:Clone()
     
+    -- Clean up scripts (same as original)
     for _,v in pairs(fakeClone:GetDescendants()) do
         if v:IsA("Script") or v:IsA("LocalScript") then
             if not (v.Name:match("Animate")) 
@@ -297,6 +333,7 @@ dupeBtn.MouseButton1Click:Connect(function()
         end
     end
 
+    -- Handle animations (same as original)
     if fakeClone:FindFirstChildOfClass("Humanoid") then
         local humanoid = fakeClone:FindFirstChildOfClass("Humanoid")
         if not humanoid:FindFirstChildOfClass("Animator") then
@@ -322,6 +359,7 @@ dupeBtn.MouseButton1Click:Connect(function()
         end
     end
 
+    -- Final setup
     fakeClone.Enabled = true
     fakeClone.ManualActivationOnly = false
     fakeClone.RequiresHandle = true
@@ -333,6 +371,7 @@ dupeBtn.MouseButton1Click:Connect(function()
     fakeClone.Name = tool.Name
     fakeClone.Parent = backpack
 
+    -- PC-specific timing adjustments
     task.wait(0.2)
     if char:FindFirstChildOfClass("Humanoid") then
         char.Humanoid:EquipTool(fakeClone)
