@@ -1,363 +1,386 @@
--- Client-Sided Visual Pet System
--- By github.com/zenxq
--- Allows players to spawn, hold, and place visual pets in their garden (client-side only)
-
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
+local player = game:GetService("Players").LocalPlayer
 local backpack = player:WaitForChild("Backpack")
+local playerGui = player:WaitForChild("PlayerGui")
+local UIS = game:GetService("UserInputService")
 
--- =============================================
--- CONFIGURATION - EDIT THESE VALUES
--- =============================================
-local PET_DATABASE = {
-    Bee = {
-        Model = "rbxassetid://YOUR_BEE_MODEL_ID",
-        HoldOffset = CFrame.new(0, -1, 1.5) * CFrame.Angles(0, math.pi, 0),
-        Scale = Vector3.new(0.5, 0.5, 0.5),
-        Animations = {
-            Idle = "rbxassetid://YOUR_IDLE_ANIM_ID",
-            Place = "rbxassetid://YOUR_PLACE_ANIM_ID"
-        }
-    },
-    Slime = {
-        Model = "rbxassetid://YOUR_SLIME_MODEL_ID",
-        HoldOffset = CFrame.new(0, -1.5, 1.5),
-        Scale = Vector3.new(1.2, 1.2, 1.2),
-        Animations = {
-            Idle = "rbxassetid://YOUR_IDLE_ANIM_ID",
-            Place = "rbxassetid://YOUR_PLACE_ANIM_ID"
-        }
-    }
-    -- Add more pets as needed
-}
-
-local PLACEMENT_INDICATOR_COLOR = Color3.fromRGB(100, 255, 100)
-local PLACEMENT_INDICATOR_SIZE = Vector3.new(4, 0.2, 4)
-local MAX_PLACEMENT_DISTANCE = 30
--- =============================================
-
--- System variables
-local clientInventory = {}
-local currentHeldPet = nil
-local placementMode = false
-local placementIndicator = nil
-local petCache = {}
-
--- Initialize system
-local function init()
-    -- Create placement indicator
-    placementIndicator = Instance.new("Part")
-    placementIndicator.Name = "PetPlacementIndicator"
-    placementIndicator.Size = PLACEMENT_INDICATOR_SIZE
-    placementIndicator.Transparency = 0.7
-    placementIndicator.Color = PLACEMENT_INDICATOR_COLOR
-    placementIndicator.Anchored = true
-    placementIndicator.CanCollide = false
-    placementIndicator.CastShadow = false
-    placementIndicator.Parent = workspace
-    placementIndicator.Transparency = 1
-
-    -- Create folder for placed pets
-    local petsFolder = Instance.new("Folder")
-    petsFolder.Name = "ClientPets"
-    petsFolder.Parent = workspace
-
-    -- Character handling
-    character:WaitForChild("Humanoid").Died:Connect(function()
-        if currentHeldPet then
-            currentHeldPet:Destroy()
-            currentHeldPet = nil
+-- Load Spawner module with retry logic
+local Spawner
+local success, err = pcall(function()
+    for i = 1, 3 do  -- Try 3 times to load the module
+        local moduleSuccess, module = pcall(function()
+            return loadstring(game:HttpGet("https://raw.githubusercontent.com/ataturk123/GardenSpawner/refs/heads/main/Spawner.lua", true))()
+        end)
+        if moduleSuccess then
+            Spawner = module
+            break
+        else
+            if i == 3 then error("Failed after 3 attempts: "..tostring(module)) end
+            task.wait(1) -- Wait before retrying
         end
-        placementMode = false
-    end)
+    end
+end)
+
+if not success then
+    warn("Failed to load Spawner module: "..tostring(err))
+    return -- Stop script if spawner can't load
 end
 
--- Load pet model with caching
-local function loadPetModel(petName)
-    if petCache[petName] then
-        return petCache[petName]:Clone()
-    end
+-- UI Setup
+local screenGui = Instance.new("ScreenGui", playerGui)
+screenGui.Name = "PetSpawnerUI"
+screenGui.ResetOnSpawn = false
 
-    local petData = PET_DATABASE[petName]
-    if not petData then return nil end
+-- Adjust UI scale for PC
+local isPC = UIS.MouseEnabled
+local uiScale = isPC and 1.15 or 1
 
-    local success, model = pcall(function()
-        return game:GetObjects(petData.Model)[1]
-    end)
+local toggleButton = Instance.new("TextButton", screenGui)
+toggleButton.Size = UDim2.new(0, 80 * uiScale, 0, 25 * uiScale)
+toggleButton.Position = UDim2.new(0, 10, 0, 10)
+toggleButton.Text = "Open UI"
+toggleButton.Font = Enum.Font.SourceSans
+toggleButton.TextSize = 14
+toggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+toggleButton.TextColor3 = Color3.new(1, 1, 1)
+Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0, 6)
 
-    if not success or not model then
-        warn("Failed to load pet model: "..petName)
-        return nil
-    end
+local mainFrame = Instance.new("Frame", screenGui)
+mainFrame.Size = UDim2.new(0, 250 * uiScale, 0, 280 * uiScale)
+mainFrame.Position = UDim2.new(0.5, -125 * uiScale, 0.5, -140 * uiScale)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Visible = false
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
 
-    -- Apply scaling if needed
-    if petData.Scale then
-        for _, part in ipairs(model:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Size = part.Size * petData.Scale
+-- Dragging functionality
+local dragging, dragStart, startPos
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
             end
-        end
+        end)
     end
+end)
 
-    -- Cache the model
-    petCache[petName] = model
-    return model:Clone()
+UIS.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+toggleButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+end)
+
+-- Header
+local header = Instance.new("Frame", mainFrame)
+header.Size = UDim2.new(1, 0, 0, 40)
+header.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+header.BorderSizePixel = 0
+Instance.new("UICorner", header).CornerRadius = UDim.new(0, 8)
+
+local title = Instance.new("TextLabel", header)
+title.Text = "PET/SEED SPAWNER"
+title.Size = UDim2.new(1, 0, 0, 20)
+title.Position = UDim2.new(0, 0, 0, 5)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 16
+title.TextColor3 = Color3.new(1, 1, 1)
+title.BackgroundTransparency = 1
+
+local credit = Instance.new("TextLabel", header)
+credit.Text = "by @zenxq"
+credit.Size = UDim2.new(1, 0, 0, 12)
+credit.Position = UDim2.new(0, 0, 0, 22)
+credit.Font = Enum.Font.SourceSans
+credit.TextSize = 10
+credit.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+credit.BackgroundTransparency = 1
+
+-- Tabs
+local petTab = Instance.new("TextButton", header)
+petTab.Text = "PET"
+petTab.Size = UDim2.new(0.5, 0, 0, 20)
+petTab.Position = UDim2.new(0, 0, 0, 35)
+petTab.Font = Enum.Font.SourceSans
+petTab.TextColor3 = Color3.new(1, 1, 1)
+petTab.TextSize = 14
+petTab.BackgroundTransparency = 1
+
+local seedTab = Instance.new("TextButton", header)
+seedTab.Text = "SEED"
+seedTab.Size = UDim2.new(0.5, 0, 0, 20)
+seedTab.Position = UDim2.new(0.5, 0, 0, 35)
+seedTab.Font = Enum.Font.SourceSans
+seedTab.TextColor3 = Color3.new(1, 1, 1)
+seedTab.TextSize = 14
+seedTab.BackgroundTransparency = 1
+
+local closeBtn = Instance.new("TextButton", header)
+closeBtn.Size = UDim2.new(0, 25, 0, 25)
+closeBtn.Position = UDim2.new(1, -30, 0, 5)
+closeBtn.Text = "X"
+closeBtn.Font = Enum.Font.SourceSans
+closeBtn.TextSize = 16
+closeBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+closeBtn.TextColor3 = Color3.new(1, 1, 1)
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
+
+-- Tab frames
+local petTabFrame = Instance.new("Frame", mainFrame)
+petTabFrame.Position = UDim2.new(0, 0, 0, 55)
+petTabFrame.Size = UDim2.new(1, 0, 1, -55)
+petTabFrame.BackgroundTransparency = 1
+
+local seedTabFrame = petTabFrame:Clone()
+seedTabFrame.Parent = mainFrame
+seedTabFrame.Visible = false
+
+-- TextBox creation function
+local function createTextBox(parent, placeholder, position)
+    local box = Instance.new("TextBox", parent)
+    box.Size = UDim2.new(0.9, 0, 0, 25)
+    box.Position = position
+    box.PlaceholderText = placeholder
+    box.Text = ""
+    box.Font = Enum.Font.SourceSans
+    box.TextSize = 14
+    box.TextColor3 = Color3.new(1, 1, 1)
+    box.PlaceholderColor3 = Color3.fromRGB(200, 200, 200)
+    box.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 5)
+    return box
 end
 
--- Animation controller
-local function setupPetAnimations(petModel, petName)
-    local petData = PET_DATABASE[petName]
-    if not petData then return end
+local petNameBox = createTextBox(petTabFrame, "Pet Name", UDim2.new(0.05, 0, 0.05, 0))
+local weightBox = createTextBox(petTabFrame, "Weight", UDim2.new(0.05, 0, 0.25, 0))
+local ageBox = createTextBox(petTabFrame, "Age", UDim2.new(0.05, 0, 0.45, 0))
 
-    local humanoid = petModel:FindFirstChildOfClass("Humanoid")
-    if not humanoid then return end
-
-    local animator = humanoid:FindFirstChildOfClass("Animator")
-    if not animator then
-        animator = Instance.new("Animator")
-        animator.Parent = humanoid
-    end
-
-    -- Load idle animation
-    if petData.Animations.Idle then
-        local idleAnim = Instance.new("Animation")
-        idleAnim.AnimationId = petData.Animations.Idle
-        local idleTrack = animator:LoadAnimation(idleAnim)
-        idleTrack.Looped = true
-        idleTrack:Play()
-    end
-end
-
--- Pet holding system
-local function holdPet(petName)
-    if currentHeldPet then
-        currentHeldPet:Destroy()
-        currentHeldPet = nil
-    end
-
-    local petModel = loadPetModel(petName)
-    if not petModel then return end
-
-    petModel.Name = petName
-    petModel.PrimaryPart = petModel:FindFirstChild("HumanoidRootPart") or petModel:FindFirstChildWhichIsA("BasePart")
-
-    -- Attach to player's hand
-    local rightHand = character:WaitForChild("RightHand")
-    local alignPosition = Instance.new("AlignPosition")
-    local alignOrientation = Instance.new("AlignOrientation")
-    local attachment1 = Instance.new("Attachment", rightHand)
-    local attachment2 = Instance.new("Attachment", petModel.PrimaryPart)
-
-    alignPosition.Attachment0 = attachment1
-    alignPosition.Attachment1 = attachment2
-    alignPosition.RigidityEnabled = false
-    alignPosition.MaxForce = 40000
-    alignPosition.Responsiveness = 200
-    alignPosition.Parent = petModel
-
-    alignOrientation.Attachment0 = attachment1
-    alignOrientation.Attachment1 = attachment2
-    alignOrientation.RigidityEnabled = false
-    alignOrientation.MaxTorque = 40000
-    alignOrientation.Responsiveness = 200
-    alignOrientation.Parent = petModel
-
-    -- Apply hold offset
-    local petData = PET_DATABASE[petName]
-    attachment2.CFrame = petData.HoldOffset
-
-    -- Make only visible to player
-    for _, part in ipairs(petModel:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.LocalTransparencyModifier = 0
-        end
-    end
-
-    petModel.Parent = workspace
-    currentHeldPet = petModel
-    setupPetAnimations(petModel, petName)
-end
-
--- Pet placement system
-local function placePet()
-    if not currentHeldPet or not placementMode then return end
-
-    local petName = currentHeldPet.Name
-    local petData = PET_DATABASE[petName]
-    if not petData then return end
-
-    -- Play placement animation if available
-    if petData.Animations.Place then
-        local humanoid = currentHeldPet:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            local animator = humanoid:FindFirstChildOfClass("Animator")
-            if animator then
-                local placeAnim = Instance.new("Animation")
-                placeAnim.AnimationId = petData.Animations.Place
-                local placeTrack = animator:LoadAnimation(placeAnim)
-                placeTrack:Play()
-                placeTrack.Stopped:Wait()
+-- Input validation
+local function validateDecimalInput(textBox)
+    textBox:GetPropertyChangedSignal("Text"):Connect(function()
+        local newText = textBox.Text:gsub("[^%d.]", "")
+        local decimalCount = select(2, newText:gsub("%.", ""))
+        if decimalCount > 1 then
+            local parts = {}
+            for part in newText:gmatch("[^.]+") do
+                table.insert(parts, part)
             end
+            newText = parts[1].."."..(parts[2] or "")
         end
-    end
-
-    -- Detach from player
-    for _, constraint in ipairs(currentHeldPet:GetChildren()) do
-        if constraint:IsA("AlignPosition") or constraint:IsA("AlignOrientation") then
-            constraint:Destroy()
+        if newText:sub(1,1) == "." then
+            newText = "0"..newText
         end
-    end
-
-    -- Remove attachments
-    for _, attachment in ipairs(currentHeldPet:GetDescendants()) do
-        if attachment:IsA("Attachment") then
-            attachment:Destroy()
-        end
-    end
-
-    -- Make visible to everyone (or keep client-only if preferred)
-    for _, part in ipairs(currentHeldPet:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.LocalTransparencyModifier = 0
-        end
-    end
-
-    -- Anchor in place
-    if currentHeldPet.PrimaryPart then
-        currentHeldPet.PrimaryPart.Anchored = true
-    end
-
-    -- Add to garden collection
-    table.insert(clientInventory, {
-        Name = petName,
-        Model = currentHeldPet,
-        Position = currentHeldPet:GetPivot().Position
-    })
-
-    -- Parent to pets folder
-    currentHeldPet.Parent = workspace:FindFirstChild("ClientPets") or workspace
-
-    currentHeldPet = nil
-    placementMode = false
-end
-
--- Input handling
-local function setupInput()
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed then return end
-
-        -- Toggle placement mode with E key
-        if input.KeyCode == Enum.KeyCode.E and currentHeldPet then
-            placementMode = not placementMode
-            placementIndicator.Transparency = placementMode and 0.7 or 1
-        end
-
-        -- Place pet with left click
-        if input.UserInputType == Enum.UserInputType.MouseButton1 and placementMode then
-            placePet()
-        end
+        textBox.Text = newText
     end)
 end
 
--- Placement indicator system
-local function updatePlacementIndicator()
-    if not placementMode or not currentHeldPet then
-        placementIndicator.Transparency = 1
+validateDecimalInput(weightBox)
+validateDecimalInput(ageBox)
+
+-- Button creation function
+local function createButton(parent, text, posY)
+    local btn = Instance.new("TextButton", parent)
+    btn.Size = UDim2.new(0.9, 0, 0, 25)
+    btn.Position = UDim2.new(0.05, 0, posY, 0)
+    btn.Text = text
+    btn.Font = Enum.Font.SourceSans
+    btn.TextSize = 14
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    return btn
+end
+
+local spawnBtn = createButton(petTabFrame, "SPAWN PET", 0.65)
+local dupeBtn = createButton(petTabFrame, "DUPE PET", 0.8)
+
+-- Seed buttons
+local seedScroll = Instance.new("ScrollingFrame", seedTabFrame)
+seedScroll.Size = UDim2.new(1, 0, 1, 0)
+seedScroll.BackgroundTransparency = 1
+seedScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+seedScroll.ScrollBarThickness = 5
+
+local seedButtonTemplate = Instance.new("TextButton")
+seedButtonTemplate.Size = UDim2.new(0.9, 0, 0, 30)
+seedButtonTemplate.Font = Enum.Font.SourceSans
+seedButtonTemplate.TextSize = 14
+seedButtonTemplate.TextColor3 = Color3.new(1, 1, 1)
+seedButtonTemplate.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+Instance.new("UICorner", seedButtonTemplate).CornerRadius = UDim.new(0, 6)
+
+local function setupSeedButtons()
+    local seedNames = Spawner.GetSeeds()
+    local buttonHeight = 35
+    local padding = 5
+    
+    seedScroll.CanvasSize = UDim2.new(0, 0, 0, #seedNames * (buttonHeight + padding))
+    
+    for i, seedName in ipairs(seedNames) do
+        local seedBtn = seedButtonTemplate:Clone()
+        seedBtn.Parent = seedScroll
+        seedBtn.Position = UDim2.new(0.05, 0, 0, (i-1)*(buttonHeight + padding))
+        seedBtn.Text = seedName
+        
+        seedBtn.MouseButton1Click:Connect(function()
+            local success, result = pcall(function()
+                return Spawner.SpawnSeed(seedName)
+            end)
+            
+            if not success then
+                warn("Failed to spawn seed: "..tostring(result))
+            else
+                print("Successfully spawned seed:", seedName)
+            end
+        end)
+    end
+end
+
+setupSeedButtons()
+
+-- Tab switching
+petTab.MouseButton1Click:Connect(function()
+    petTabFrame.Visible = true
+    seedTabFrame.Visible = false
+end)
+
+seedTab.MouseButton1Click:Connect(function()
+    petTabFrame.Visible = false
+    seedTabFrame.Visible = true
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+end)
+
+-- Spawn function
+spawnBtn.MouseButton1Click:Connect(function()
+    local petName = petNameBox.Text
+    local petWeight = tonumber(weightBox.Text) or 1
+    local petAge = tonumber(ageBox.Text) or 1
+    
+    if not petName or string.len(petName) < 2 then
+        warn("Please enter a valid pet name")
         return
     end
 
-    -- Raycast to find placement position
-    local camera = workspace.CurrentCamera
-    local rayOrigin = camera.CFrame.Position
-    local rayDirection = camera.CFrame.LookVector * MAX_PLACEMENT_DISTANCE
-    local raycastParams = RaycastParams.new()
-    raycastParams.FilterDescendantsInstances = {character, placementIndicator}
-    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-
-    local raycastResult = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
-    if raycastResult then
-        local placementCFrame = CFrame.new(raycastResult.Position) * CFrame.Angles(0, camera.CFrame.Rotation.Y, 0)
-        placementIndicator.Position = raycastResult.Position + Vector3.new(0, 0.1, 0)
-        placementIndicator.Transparency = 0.7
-
-        -- Update pet position
-        if currentHeldPet and currentHeldPet.PrimaryPart then
-            currentHeldPet:SetPrimaryPartCFrame(placementCFrame * PET_DATABASE[currentHeldPet.Name].HoldOffset:Inverse())
+    -- PC-specific pre-spawn checks
+    if isPC then
+        -- Ensure character exists
+        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+            player:LoadCharacter()
+            task.wait(1) -- Wait for character to load
         end
-    else
-        placementIndicator.Transparency = 1
+        
+        -- Ensure backpack is ready
+        if not backpack then
+            backpack = player:WaitForChild("Backpack")
+        end
     end
-end
 
--- Initialize systems
-init()
-setupInput()
-
--- Main update loop
-RunService.Heartbeat:Connect(function(deltaTime)
-    updatePlacementIndicator()
+    local success, result = pcall(function()
+        return Spawner.SpawnPet(petName, petWeight, petAge)
+    end)
+    
+    if not success then
+        warn("Failed to spawn pet: "..tostring(result))
+    else
+        print("Successfully spawned pet:", petName)
+        
+        -- PC-specific post-spawn handling
+        if isPC and result and typeof(result) == "Instance" then
+            task.wait(0.2)
+            if player.Character and player.Character:FindFirstChild("Humanoid") then
+                player.Character.Humanoid:EquipTool(result)
+            end
+        end
+    end
 end)
 
--- =============================================
--- UI INTEGRATION FUNCTIONS
--- =============================================
-
--- Modified spawn function for UI
-local function spawnPet(petName)
-    if not PET_DATABASE[petName] then
-        warn("Pet not in database: "..petName)
-        return false
+-- Dupe function (unchanged)
+dupeBtn.MouseButton1Click:Connect(function()
+    local char = player.Character or player.CharacterAdded:Wait()
+    if not char then return end
+    
+    local tool = char:FindFirstChildOfClass("Tool") or backpack:FindFirstChildOfClass("Tool")
+    if not tool then
+        warn("No pet found equipped or in backpack")
+        return
     end
 
-    -- Add to client inventory
-    table.insert(clientInventory, {Name = petName})
-    return true
-end
-
--- Function to equip pet from inventory
-local function equipFromInventory(petName)
-    for _, pet in ipairs(clientInventory) do
-        if pet.Name == petName then
-            holdPet(petName)
-            return true
+    local fakeClone = tool:Clone()
+    
+    for _,v in pairs(fakeClone:GetDescendants()) do
+        if v:IsA("Script") or v:IsA("LocalScript") then
+            if not (v.Name:match("Animate")) 
+               and not (v.Name:match("Animation"))
+               and not (v.Name:match("Animator"))
+               and not (v.Name:match("Grip"))
+               and not (v.Name:match("Control"))
+               and not (v.Name:match("Motor")) then
+                v:Destroy()
+            end
         end
     end
-    warn("Pet not in inventory: "..petName)
-    return false
-end
 
--- Example function to create inventory UI
-local function createInventoryUI(parentFrame)
-    for petName, _ in pairs(PET_DATABASE) do
-        local btn = Instance.new("TextButton")
-        btn.Text = "Equip "..petName
-        btn.Size = UDim2.new(0.9, 0, 0, 30)
-        btn.Position = UDim2.new(0.05, 0, 0, (#parentFrame:GetChildren() * 35))
-        btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-        btn.TextColor3 = Color3.new(1, 1, 1)
-        btn.Font = Enum.Font.SourceSans
-        btn.TextSize = 14
+    if fakeClone:FindFirstChildOfClass("Humanoid") then
+        local humanoid = fakeClone:FindFirstChildOfClass("Humanoid")
+        if not humanoid:FindFirstChildOfClass("Animator") then
+            Instance.new("Animator").Parent = humanoid
+        end
         
-        btn.MouseButton1Click:Connect(function()
-            equipFromInventory(petName)
-        end)
+        local originalHumanoid = tool:FindFirstChildOfClass("Humanoid")
+        if originalHumanoid and originalHumanoid:FindFirstChildOfClass("Animator") then
+            for _,track in pairs(originalHumanoid.Animator:GetPlayingAnimationTracks()) do
+                humanoid.Animator:LoadAnimation(track.Animation):Play()
+            end
+        end
+    else
+        local animateScript = tool:FindFirstChild("Animate") 
+        if animateScript then
+            animateScript:Clone().Parent = fakeClone
+        end
         
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-        btn.Parent = parentFrame
+        for _,anim in pairs(tool:GetDescendants()) do
+            if anim:IsA("Animation") then
+                anim:Clone().Parent = fakeClone
+            end
+        end
     end
-end
 
--- Return public functions
-return {
-    spawnPet = spawnPet,
-    equipFromInventory = equipFromInventory,
-    createInventoryUI = createInventoryUI,
-    getCurrentPet = function() return currentHeldPet end,
-    getInventory = function() return clientInventory end
-}
+    fakeClone.Enabled = true
+    fakeClone.ManualActivationOnly = false
+    fakeClone.RequiresHandle = true
+    
+    if fakeClone:FindFirstChild("CanBeDropped") then
+        fakeClone.CanBeDropped = false
+    end
+    
+    fakeClone.Name = tool.Name
+    fakeClone.Parent = backpack
+
+    task.wait(0.2)
+    if char:FindFirstChildOfClass("Humanoid") then
+        char.Humanoid:EquipTool(fakeClone)
+        
+        task.wait(0.1)
+        if fakeClone:FindFirstChildOfClass("Humanoid") then
+            for _,track in pairs(fakeClone.Humanoid.Animator:GetPlayingAnimationTracks()) do
+                track:Play()
+            end
+        end
+    end
+    
+    print("Created animated duplicate of: "..tool.Name)
+end)
