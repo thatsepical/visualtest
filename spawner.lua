@@ -11,8 +11,8 @@ local isPC = UIS.MouseEnabled
 local uiScale = isPC and 1.15 or 1
 
 local discordBlack = Color3.fromRGB(32, 34, 37)
-local lavender = Color3.fromRGB(200, 160, 255)
-local darkLavender = Color3.fromRGB(180, 140, 235)
+local lavender = Color3.fromRGB(180, 140, 235)  -- Darker lavender
+local darkLavender = Color3.fromRGB(160, 120, 215)  -- Even darker for active states
 local headerColor = Color3.fromRGB(47, 49, 54)
 local textColor = Color3.fromRGB(220, 220, 220)
 
@@ -30,7 +30,7 @@ Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0, 6)
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 250*uiScale, 0, 240*uiScale) -- Reduced height
+mainFrame.Size = UDim2.new(0, 250*uiScale, 0, 240*uiScale)
 mainFrame.Position = UDim2.new(0.5, -125*uiScale, 0.5, -120*uiScale)
 mainFrame.BackgroundColor3 = discordBlack
 mainFrame.BorderSizePixel = 0
@@ -117,13 +117,17 @@ local function makeTab(name, pos)
     b.Text = name
     b.Size = UDim2.new(0.33, -2, 1, 0)
     b.Position = UDim2.new(pos, 0, 0, 0)
-    b.Font = Enum.Font.SourceSansBold -- Made text bold
+    b.Font = Enum.Font.SourceSansBold
     b.TextColor3 = textColor
     b.TextSize = 14
     b.BackgroundColor3 = (name == "PET") and darkLavender or headerColor
     b.BorderSizePixel = 0
     b.Parent = tabBackground
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
+    
+    -- Add corner radius only to the active tab
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 4)
+    corner.Parent = b
     
     b.MouseEnter:Connect(function()
         if b.BackgroundColor3 ~= darkLavender then
@@ -150,10 +154,10 @@ closeBtn.Position = UDim2.new(1, -30, 0, 5)
 closeBtn.Text = "X"
 closeBtn.Font = Enum.Font.SourceSans
 closeBtn.TextSize = 16
-closeBtn.BackgroundColor3 = lavender
-closeBtn.TextColor3 = Color3.new(0,0,0)
+closeBtn.BackgroundTransparency = 1  -- No background color
+closeBtn.TextColor3 = textColor
+closeBtn.BorderSizePixel = 0
 closeBtn.Parent = header
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
 
 local petTabFrame = Instance.new("Frame")
 local seedTabFrame = Instance.new("Frame")
@@ -332,9 +336,18 @@ local function switch(tab)
     seedTabFrame.Visible = (tab == "seed")
     eggTabFrame.Visible = (tab == "egg")
     
+    -- Update tab appearances with corner radius only on active tab
     petTab.BackgroundColor3 = (tab == "pet") and darkLavender or headerColor
     seedTab.BackgroundColor3 = (tab == "seed") and darkLavender or headerColor
     eggTab.BackgroundColor3 = (tab == "egg") and darkLavender or headerColor
+    
+    -- Apply corner radius only to active tab
+    for _, t in ipairs({petTab, seedTab, eggTab}) do
+        local corner = t:FindFirstChildOfClass("UICorner")
+        if corner then
+            corner.CornerRadius = (t.BackgroundColor3 == darkLavender) and UDim.new(0, 4) or UDim.new(0, 0)
+        end
+    end
 end
 
 petTab.MouseButton1Click:Connect(function() switch("pet") end)
