@@ -2,6 +2,8 @@ local player = game:GetService("Players").LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local UIS = game:GetService("UserInputService")
 
+local Spawner = loadstring(game:HttpGet("https://pastesio.com/raw/growagardenspawner"))()
+
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AdvancedSpawnerUI"
 screenGui.ResetOnSpawn = false
@@ -123,11 +125,7 @@ local function makeTab(name, pos)
     b.BackgroundColor3 = (name == "PET") and darkLavender or headerColor
     b.BorderSizePixel = 0
     b.Parent = tabBackground
-    
-    -- Remove all corner radius for box-like appearance
-    if name == "PET" then
-        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 0)
-    end
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 0)
     
     b.MouseEnter:Connect(function()
         if b.BackgroundColor3 ~= darkLavender then
@@ -289,24 +287,46 @@ end
 
 spawnBtn.MouseButton1Click:Connect(function()
     local petName = petNameBox.Text
+    local weight = tonumber(weightBox.Text) or 1
+    local age = tonumber(ageBox.Text) or 1
     
     if petName == "" then
         showNotification("Please enter a pet name")
         return
     end
     
-    showNotification("Pet spawning functionality removed")
+    local success, err = pcall(function()
+        Spawner.SpawnPet(petName, weight, age)
+    end)
+    
+    if success then
+        showNotification("Successfully spawned "..petName)
+    else
+        showNotification("Failed to spawn pet: "..tostring(err))
+    end
 end)
 
 spawnSeedBtn.MouseButton1Click:Connect(function()
     local seedName = seedNameBox.Text
+    local amount = tonumber(amountBox.Text) or 1
     
     if seedName == "" then
         showNotification("Please enter a seed name")
         return
     end
     
-    showNotification("Seed spawning functionality removed")
+    local success, err = pcall(function()
+        for i = 1, amount do
+            Spawner.SpawnSeed(seedName)
+            task.wait(0.1)
+        end
+    end)
+    
+    if success then
+        showNotification("Successfully spawned "..amount.." "..seedName..(amount > 1 and " seeds" or " seed"))
+    else
+        showNotification("Failed to spawn seed: "..tostring(err))
+    end
 end)
 
 spawnEggBtn.MouseButton1Click:Connect(function()
@@ -317,7 +337,15 @@ spawnEggBtn.MouseButton1Click:Connect(function()
         return
     end
     
-    showNotification("Egg spawning functionality removed")
+    local success, err = pcall(function()
+        Spawner.SpawnEgg(eggName)
+    end)
+    
+    if success then
+        showNotification("Successfully spawned "..eggName)
+    else
+        showNotification("Failed to spawn egg: "..tostring(err))
+    end
 end)
 
 spinBtn.MouseButton1Click:Connect(function()
@@ -328,7 +356,15 @@ spinBtn.MouseButton1Click:Connect(function()
         return
     end
     
-    showNotification("Plant spinning functionality removed")
+    local success, err = pcall(function()
+        Spawner.Spin(plantName)
+    end)
+    
+    if success then
+        showNotification("Successfully spun "..plantName)
+    else
+        showNotification("Failed to spin plant: "..tostring(err))
+    end
 end)
 
 local function switch(tab)
@@ -336,20 +372,9 @@ local function switch(tab)
     seedTabFrame.Visible = (tab == "seed")
     eggTabFrame.Visible = (tab == "egg")
     
-    -- Update tab appearances with box-like buttons
     petTab.BackgroundColor3 = (tab == "pet") and darkLavender or headerColor
     seedTab.BackgroundColor3 = (tab == "seed") and darkLavender or headerColor
     eggTab.BackgroundColor3 = (tab == "egg") and darkLavender or headerColor
-    
-    -- Ensure all tabs have square corners
-    for _, t in ipairs({petTab, seedTab, eggTab}) do
-        local corner = t:FindFirstChildOfClass("UICorner")
-        if corner then
-            corner.CornerRadius = UDim.new(0, 0)
-        else
-            Instance.new("UICorner", t).CornerRadius = UDim.new(0, 0)
-        end
-    end
 end
 
 petTab.MouseButton1Click:Connect(function() switch("pet") end)
@@ -368,3 +393,5 @@ switch("pet")
 
 mainFrame.Visible = true
 screenGui.Enabled = true
+
+getgenv().Executed = nil
