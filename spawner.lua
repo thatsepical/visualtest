@@ -11,8 +11,8 @@ local isPC = UIS.MouseEnabled
 local uiScale = isPC and 1.15 or 1
 
 local discordBlack = Color3.fromRGB(32, 34, 37)
-local lavender = Color3.fromRGB(180, 140, 235)  -- Darker lavender
-local darkLavender = Color3.fromRGB(160, 120, 215)  -- Even darker for active states
+local lavender = Color3.fromRGB(180, 140, 235)
+local darkLavender = Color3.fromRGB(160, 120, 215)
 local headerColor = Color3.fromRGB(47, 49, 54)
 local textColor = Color3.fromRGB(220, 220, 220)
 
@@ -124,10 +124,10 @@ local function makeTab(name, pos)
     b.BorderSizePixel = 0
     b.Parent = tabBackground
     
-    -- Add corner radius only to the active tab
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 4)
-    corner.Parent = b
+    -- Remove all corner radius for box-like appearance
+    if name == "PET" then
+        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 0)
+    end
     
     b.MouseEnter:Connect(function()
         if b.BackgroundColor3 ~= darkLavender then
@@ -154,7 +154,7 @@ closeBtn.Position = UDim2.new(1, -30, 0, 5)
 closeBtn.Text = "X"
 closeBtn.Font = Enum.Font.SourceSans
 closeBtn.TextSize = 16
-closeBtn.BackgroundTransparency = 1  -- No background color
+closeBtn.BackgroundTransparency = 1
 closeBtn.TextColor3 = textColor
 closeBtn.BorderSizePixel = 0
 closeBtn.Parent = header
@@ -336,16 +336,18 @@ local function switch(tab)
     seedTabFrame.Visible = (tab == "seed")
     eggTabFrame.Visible = (tab == "egg")
     
-    -- Update tab appearances with corner radius only on active tab
+    -- Update tab appearances with box-like buttons
     petTab.BackgroundColor3 = (tab == "pet") and darkLavender or headerColor
     seedTab.BackgroundColor3 = (tab == "seed") and darkLavender or headerColor
     eggTab.BackgroundColor3 = (tab == "egg") and darkLavender or headerColor
     
-    -- Apply corner radius only to active tab
+    -- Ensure all tabs have square corners
     for _, t in ipairs({petTab, seedTab, eggTab}) do
         local corner = t:FindFirstChildOfClass("UICorner")
         if corner then
-            corner.CornerRadius = (t.BackgroundColor3 == darkLavender) and UDim.new(0, 4) or UDim.new(0, 0)
+            corner.CornerRadius = UDim.new(0, 0)
+        else
+            Instance.new("UICorner", t).CornerRadius = UDim.new(0, 0)
         end
     end
 end
