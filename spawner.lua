@@ -3,12 +3,23 @@ local playerGui = player:WaitForChild("PlayerGui")
 local UIS = game:GetService("UserInputService")
 
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AdvancedSpawnerUI"
+screenGui.Name = "SpawnerUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
 local isPC = UIS.MouseEnabled
 local uiScale = isPC and 1.15 or 1
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 250*uiScale, 0, 280*uiScale)
+mainFrame.Position = UDim2.new(0.5, -125*uiScale, 0.5, -140*uiScale)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Visible = false
+mainFrame.Parent = screenGui
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0,8)
 
 local toggleButton = Instance.new("TextButton")
 toggleButton.Name = "ToggleButton"
@@ -21,17 +32,6 @@ toggleButton.BackgroundColor3 = Color3.fromRGB(60,60,60)
 toggleButton.TextColor3 = Color3.new(1,1,1)
 toggleButton.Parent = screenGui
 Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0,6)
-
-local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 250*uiScale, 0, 280*uiScale)
-mainFrame.Position = UDim2.new(0.5, -125*uiScale, 0.5, -140*uiScale)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-mainFrame.BorderSizePixel = 0
-mainFrame.Active = true
-mainFrame.Visible = true
-mainFrame.Parent = screenGui
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0,8)
 
 local dragging, dragStart, startPos
 mainFrame.InputBegan:Connect(function(input)
@@ -65,20 +65,9 @@ header.BorderSizePixel = 0
 header.Parent = mainFrame
 Instance.new("UICorner", header).CornerRadius = UDim.new(0,8)
 
-local versionText = Instance.new("TextLabel")
-versionText.Text = "v1.8.3"
-versionText.Size = UDim2.new(0, 40, 0, 12)
-versionText.Position = UDim2.new(0, 5, 0, 5)
-versionText.Font = Enum.Font.SourceSans
-versionText.TextSize = 10
-versionText.TextColor3 = Color3.new(0.8,0.8,0.8)
-versionText.BackgroundTransparency = 1
-versionText.TextXAlignment = Enum.TextXAlignment.Left
-versionText.Parent = header
-
 local title = Instance.new("TextLabel")
-title.Text = "PET/SEED/EGG SPAWNER"
-title.Size = UDim2.new(1, -10, 0, 20)
+title.Text = "SPAWNER UI"
+title.Size = UDim2.new(1, -10, 1, -10)
 title.Position = UDim2.new(0, 5, 0, 5)
 title.Font = Enum.Font.SourceSansBold
 title.TextSize = 16
@@ -86,44 +75,6 @@ title.TextColor3 = Color3.new(1,1,1)
 title.BackgroundTransparency = 1
 title.TextXAlignment = Enum.TextXAlignment.Center
 title.Parent = header
-
-local credit = Instance.new("TextLabel")
-credit.Text = "by @zenxq"
-credit.Size = UDim2.new(1, -10, 0, 12)
-credit.Position = UDim2.new(0, 5, 0, 22)
-credit.Font = Enum.Font.SourceSans
-credit.TextSize = 10
-credit.TextColor3 = Color3.new(0.8,0.8,0.8)
-credit.BackgroundTransparency = 1
-credit.TextXAlignment = Enum.TextXAlignment.Center
-credit.Parent = header
-
-local tabBackground = Instance.new("Frame")
-tabBackground.Size = UDim2.new(1, 0, 0, 20)
-tabBackground.Position = UDim2.new(0, 0, 0, 35)
-tabBackground.BackgroundColor3 = Color3.fromRGB(50,50,50)
-tabBackground.BorderSizePixel = 0
-tabBackground.Parent = header
-Instance.new("UICorner", tabBackground).CornerRadius = UDim.new(0,4)
-
-local function makeTab(name, pos)
-    local b = Instance.new("TextButton")
-    b.Text = name
-    b.Size = UDim2.new(0.33, -2, 1, 0)
-    b.Position = UDim2.new(pos, 0, 0, 0)
-    b.Font = Enum.Font.SourceSans
-    b.TextColor3 = Color3.new(1,1,1)
-    b.TextSize = 14
-    b.BackgroundColor3 = (name == "PET") and Color3.fromRGB(70,70,70) or Color3.fromRGB(50,50,50)
-    b.BorderSizePixel = 0
-    b.Parent = tabBackground
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0,4)
-    return b
-end
-
-local petTab = makeTab("PET", 0.00)
-local seedTab = makeTab("SEED", 0.33)
-local eggTab = makeTab("EGG", 0.66)
 
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 25, 0, 25)
@@ -136,127 +87,66 @@ closeBtn.TextColor3 = Color3.new(1,1,1)
 closeBtn.Parent = header
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0,6)
 
+local tabBackground = Instance.new("Frame")
+tabBackground.Size = UDim2.new(1, 0, 0, 20)
+tabBackground.Position = UDim2.new(0, 0, 0, 35)
+tabBackground.BackgroundColor3 = Color3.fromRGB(50,50,50)
+tabBackground.BorderSizePixel = 0
+tabBackground.Parent = header
+Instance.new("UICorner", tabBackground).CornerRadius = UDim.new(0,4)
+
+local petTab = Instance.new("TextButton")
+petTab.Text = "PET"
+petTab.Size = UDim2.new(0.33, -2, 1, 0)
+petTab.Position = UDim2.new(0, 0, 0, 0)
+petTab.Font = Enum.Font.SourceSans
+petTab.TextColor3 = Color3.new(1,1,1)
+petTab.TextSize = 14
+petTab.BackgroundColor3 = Color3.fromRGB(70,70,70)
+petTab.Parent = tabBackground
+Instance.new("UICorner", petTab).CornerRadius = UDim.new(0,4)
+
+local seedTab = Instance.new("TextButton")
+seedTab.Text = "SEED"
+seedTab.Size = UDim2.new(0.33, -2, 1, 0)
+seedTab.Position = UDim2.new(0.33, 0, 0, 0)
+seedTab.Font = Enum.Font.SourceSans
+seedTab.TextColor3 = Color3.new(1,1,1)
+seedTab.TextSize = 14
+seedTab.BackgroundColor3 = Color3.fromRGB(50,50,50)
+seedTab.Parent = tabBackground
+Instance.new("UICorner", seedTab).CornerRadius = UDim.new(0,4)
+
+local eggTab = Instance.new("TextButton")
+eggTab.Text = "EGG"
+eggTab.Size = UDim2.new(0.33, -2, 1, 0)
+eggTab.Position = UDim2.new(0.66, 0, 0, 0)
+eggTab.Font = Enum.Font.SourceSans
+eggTab.TextColor3 = Color3.new(1,1,1)
+eggTab.TextSize = 14
+eggTab.BackgroundColor3 = Color3.fromRGB(50,50,50)
+eggTab.Parent = tabBackground
+Instance.new("UICorner", eggTab).CornerRadius = UDim.new(0,4)
+
 local petTabFrame = Instance.new("Frame")
+petTabFrame.Size = UDim2.new(1, 0, 1, -55)
+petTabFrame.Position = UDim2.new(0, 0, 0, 55)
+petTabFrame.BackgroundTransparency = 1
+petTabFrame.Parent = mainFrame
+
 local seedTabFrame = Instance.new("Frame")
-local eggTabFrame = Instance.new("Frame")
-
-for _, f in ipairs({petTabFrame, seedTabFrame, eggTabFrame}) do
-    f.Position = UDim2.new(0, 0, 0, 55)
-    f.Size = UDim2.new(1, 0, 1, -55)
-    f.BackgroundTransparency = 1
-    f.Parent = mainFrame
-end
-
+seedTabFrame.Size = UDim2.new(1, 0, 1, -55)
+seedTabFrame.Position = UDim2.new(0, 0, 0, 55)
+seedTabFrame.BackgroundTransparency = 1
 seedTabFrame.Visible = false
+seedTabFrame.Parent = mainFrame
+
+local eggTabFrame = Instance.new("Frame")
+eggTabFrame.Size = UDim2.new(1, 0, 1, -55)
+eggTabFrame.Position = UDim2.new(0, 0, 0, 55)
+eggTabFrame.BackgroundTransparency = 1
 eggTabFrame.Visible = false
-
-local function createTextBox(parent, placeholder, pos)
-    local box = Instance.new("TextBox")
-    box.Size = UDim2.new(0.9, 0, 0, 25)
-    box.Position = pos
-    box.PlaceholderText = placeholder
-    box.Text = ""
-    box.Font = Enum.Font.SourceSans
-    box.TextSize = 14
-    box.TextColor3 = Color3.new(1,1,1)
-    box.PlaceholderColor3 = Color3.fromRGB(200,200,200)
-    box.BackgroundColor3 = Color3.fromRGB(90,90,90)
-    box.Parent = parent
-    Instance.new("UICorner", box).CornerRadius = UDim.new(0,5)
-    return box
-end
-
-local petNameBox = createTextBox(petTabFrame, "Pet Name", UDim2.new(0.05, 0, 0.05, 0))
-local weightBox = createTextBox(petTabFrame, "Weight", UDim2.new(0.05, 0, 0.25, 0))
-local ageBox = createTextBox(petTabFrame, "Age", UDim2.new(0.05, 0, 0.45, 0))
-local seedNameBox = createTextBox(seedTabFrame, "Seed Name", UDim2.new(0.05, 0, 0.05, 0))
-local amountBox = createTextBox(seedTabFrame, "Amount", UDim2.new(0.05, 0, 0.25, 0))
-local eggNameBox = createTextBox(eggTabFrame, "Egg Name", UDim2.new(0.05, 0, 0.05, 0))
-local spinBox = createTextBox(eggTabFrame, "Plant to Spin", UDim2.new(0.05, 0, 0.25, 0))
-
-local function validateDecimal(box)
-    box:GetPropertyChangedSignal("Text"):Connect(function()
-        local t = box.Text:gsub("[^%d.]", "")
-        if select(2, t:gsub("%.", "")) > 1 then
-            local p1, p2 = t:match("([^%.]+)%.?(.*)")
-            t = p1.."."..p2
-        end
-        if t:sub(1,1) == "." then t = "0"..t end
-        if t ~= box.Text then box.Text = t end
-    end)
-end
-
-for _, b in ipairs({weightBox, ageBox, amountBox}) do 
-    validateDecimal(b) 
-end
-
-local function createButton(parent, label, posY)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9, 0, 0, 25)
-    btn.Position = UDim2.new(0.05, 0, posY, 0)
-    btn.Text = label
-    btn.Font = Enum.Font.SourceSans
-    btn.TextSize = 14
-    btn.TextColor3 = Color3.new(1,1,1)
-    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    btn.Parent = parent
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
-    return btn
-end
-
-local spawnBtn = createButton(petTabFrame, "SPAWN PET", 0.65)
-local spawnSeedBtn = createButton(seedTabFrame, "SPAWN SEED", 0.45)
-local spawnEggBtn = createButton(eggTabFrame, "SPAWN EGG", 0.45)
-local spinBtn = createButton(eggTabFrame, "SPIN PLANT", 0.65)
-
-local function showNotAvailable()
-    local notification = Instance.new("Frame")
-    notification.Name = "SpawnNotification"
-    notification.Size = UDim2.new(0, 250, 0, 60)
-    notification.Position = UDim2.new(1, -260, 1, -70)
-    notification.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    notification.BorderSizePixel = 0
-    notification.Parent = screenGui
-    Instance.new("UICorner", notification).CornerRadius = UDim.new(0, 8)
-    
-    local notificationText = Instance.new("TextLabel")
-    notificationText.Text = "Spawning is currently unavailable\nPlease try again later"
-    notificationText.Size = UDim2.new(1, -10, 1, -10)
-    notificationText.Position = UDim2.new(0, 5, 0, 5)
-    notificationText.Font = Enum.Font.SourceSans
-    notificationText.TextSize = 14
-    notificationText.TextColor3 = Color3.new(1, 1, 1)
-    notificationText.BackgroundTransparency = 1
-    notificationText.TextWrapped = true
-    notificationText.Parent = notification
-    
-    notification.Position = UDim2.new(1, 300, 1, -70)
-    notification:TweenPosition(
-        UDim2.new(1, -260, 1, -70),
-        Enum.EasingDirection.Out,
-        Enum.EasingStyle.Quad,
-        0.3,
-        true
-    )
-    
-    task.delay(3, function()
-        notification:TweenPosition(
-            UDim2.new(1, 300, 1, -70),
-            Enum.EasingDirection.In,
-            Enum.EasingStyle.Quad,
-            0.3,
-            true,
-            function()
-                notification:Destroy()
-            end
-        )
-    end)
-end
-
-spawnBtn.MouseButton1Click:Connect(showNotAvailable)
-spawnSeedBtn.MouseButton1Click:Connect(showNotAvailable)
-spawnEggBtn.MouseButton1Click:Connect(showNotAvailable)
-spinBtn.MouseButton1Click:Connect(showNotAvailable)
+eggTabFrame.Parent = mainFrame
 
 local function switch(tab)
     petTabFrame.Visible = (tab == "pet")
@@ -281,6 +171,3 @@ toggleButton.MouseButton1Click:Connect(function()
 end)
 
 switch("pet")
-
-mainFrame.Visible = true
-screenGui.Enabled = true
