@@ -26,16 +26,18 @@ toggleButton.TextSize = 14
 toggleButton.BackgroundColor3 = lavender
 toggleButton.TextColor3 = Color3.new(0,0,0)
 toggleButton.Parent = screenGui
+Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0, 6)
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 250*uiScale, 0, 280*uiScale)
-mainFrame.Position = UDim2.new(0.5, -125*uiScale, 0.5, -140*uiScale)
+mainFrame.Size = UDim2.new(0, 250*uiScale, 0, 240*uiScale) -- Reduced height
+mainFrame.Position = UDim2.new(0.5, -125*uiScale, 0.5, -120*uiScale)
 mainFrame.BackgroundColor3 = discordBlack
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
 mainFrame.Visible = true
 mainFrame.Parent = screenGui
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
 
 local dragging, dragStart, startPos
 mainFrame.InputBegan:Connect(function(input)
@@ -67,6 +69,7 @@ header.Size = UDim2.new(1, 0, 0, 40)
 header.BackgroundColor3 = headerColor
 header.BorderSizePixel = 0
 header.Parent = mainFrame
+Instance.new("UICorner", header).CornerRadius = UDim.new(0, 8)
 
 local versionText = Instance.new("TextLabel")
 versionText.Text = "v1.8.3"
@@ -107,18 +110,20 @@ tabBackground.Position = UDim2.new(0, 0, 0, 35)
 tabBackground.BackgroundColor3 = headerColor
 tabBackground.BorderSizePixel = 0
 tabBackground.Parent = header
+Instance.new("UICorner", tabBackground).CornerRadius = UDim.new(0, 4)
 
 local function makeTab(name, pos)
     local b = Instance.new("TextButton")
     b.Text = name
     b.Size = UDim2.new(0.33, -2, 1, 0)
     b.Position = UDim2.new(pos, 0, 0, 0)
-    b.Font = Enum.Font.SourceSans
+    b.Font = Enum.Font.SourceSansBold -- Made text bold
     b.TextColor3 = textColor
     b.TextSize = 14
     b.BackgroundColor3 = (name == "PET") and darkLavender or headerColor
     b.BorderSizePixel = 0
     b.Parent = tabBackground
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
     
     b.MouseEnter:Connect(function()
         if b.BackgroundColor3 ~= darkLavender then
@@ -148,6 +153,7 @@ closeBtn.TextSize = 16
 closeBtn.BackgroundColor3 = lavender
 closeBtn.TextColor3 = Color3.new(0,0,0)
 closeBtn.Parent = header
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
 
 local petTabFrame = Instance.new("Frame")
 local seedTabFrame = Instance.new("Frame")
@@ -176,6 +182,7 @@ local function createTextBox(parent, placeholder, pos)
     box.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
     box.BorderSizePixel = 0
     box.Parent = parent
+    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 5)
     return box
 end
 
@@ -214,6 +221,7 @@ local function createButton(parent, label, posY)
     btn.BackgroundColor3 = lavender
     btn.BorderSizePixel = 0
     btn.Parent = parent
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     
     btn.MouseEnter:Connect(function()
         btn.BackgroundColor3 = darkLavender
@@ -239,6 +247,7 @@ local function showNotification(message)
     notification.BackgroundColor3 = headerColor
     notification.BorderSizePixel = 0
     notification.Parent = screenGui
+    Instance.new("UICorner", notification).CornerRadius = UDim.new(0, 8)
     
     local notificationText = Instance.new("TextLabel")
     notificationText.Text = message
