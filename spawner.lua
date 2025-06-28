@@ -2,9 +2,6 @@ local player = game:GetService("Players").LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local UIS = game:GetService("UserInputService")
 
-local Spawner =
-loadstring(game:HttpGet("https://pastesio.com/raw/petspawner"))()
-
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AdvancedSpawnerUI"
 screenGui.ResetOnSpawn = false
@@ -75,7 +72,7 @@ header.Parent = mainFrame
 Instance.new("UICorner", header).CornerRadius = UDim.new(0, 8)
 
 local versionText = Instance.new("TextLabel")
-versionText.Text = "v1.8.3"
+versionText.Text = "v1.9.4"
 versionText.Size = UDim2.new(0, 40, 0, 12)
 versionText.Position = UDim2.new(0, 5, 0, 5)
 versionText.Font = Enum.Font.SourceSans
@@ -161,8 +158,9 @@ closeBtn.Parent = header
 local petTabFrame = Instance.new("Frame")
 local seedTabFrame = Instance.new("Frame")
 local eggTabFrame = Instance.new("Frame")
+local notesFrame = Instance.new("Frame")
 
-for _, f in ipairs({petTabFrame, seedTabFrame, eggTabFrame}) do
+for _, f in ipairs({petTabFrame, seedTabFrame, eggTabFrame, notesFrame}) do
     f.Position = UDim2.new(0, 0, 0, 55)
     f.Size = UDim2.new(1, 0, 1, -55)
     f.BackgroundTransparency = 1
@@ -171,6 +169,7 @@ end
 
 seedTabFrame.Visible = false
 eggTabFrame.Visible = false
+notesFrame.Visible = false
 
 local function createTextBox(parent, placeholder, pos)
     local box = Instance.new("TextBox")
@@ -242,6 +241,52 @@ local spawnSeedBtn = createButton(seedTabFrame, "SPAWN SEED", 0.45)
 local spawnEggBtn = createButton(eggTabFrame, "SPAWN EGG", 0.45)
 local spinBtn = createButton(eggTabFrame, "SPIN PLANT", 0.65)
 
+-- Add NOTES button in bottom right corner
+local notesBtn = Instance.new("TextButton")
+notesBtn.Name = "NotesButton"
+notesBtn.Text = "<u>NOTES</u>"
+notesBtn.Size = UDim2.new(0, 60, 0, 20)
+notesBtn.Position = UDim2.new(1, -65, 1, -25)
+notesBtn.Font = Enum.Font.SourceSans
+notesBtn.TextSize = 12
+notesBtn.TextColor3 = textColor
+notesBtn.BackgroundTransparency = 1
+notesBtn.TextXAlignment = Enum.TextXAlignment.Right
+notesBtn.RichText = true
+notesBtn.Parent = mainFrame
+
+-- Add back button to notes frame
+local backBtn = createButton(notesFrame, "BACK", 0.85)
+backBtn.Size = UDim2.new(0.3, 0, 0, 25)
+backBtn.Position = UDim2.new(0.05, 0, 0.85, 0)
+
+-- Create scrolling frame for notes
+local scrollFrame = Instance.new("ScrollingFrame")
+scrollFrame.Size = UDim2.new(0.9, 0, 0.75, 0)
+scrollFrame.Position = UDim2.new(0.05, 0, 0.05, 0)
+scrollFrame.BackgroundTransparency = 1
+scrollFrame.BorderSizePixel = 0
+scrollFrame.ScrollBarThickness = 5
+scrollFrame.Parent = notesFrame
+
+-- Add notes text
+local notesText = Instance.new("TextLabel")
+notesText.Text = "An actual working pet spawner script. Since the one from my youtube always gets broken. Keep this a secret.\n\nloadstring(game:HttpGet(\"https://raw.githubusercontent.com/thatsepical/spawner/refs/heads/main/growagardenspawner.lua\"))()\n\nCopy the script and rejoin\nExecute the script\nMake sure to execute the script with PURPLE UI, for it to work everytime.\nYou need to do these steps for the script with YELLOW UI to work."
+notesText.Size = UDim2.new(1, 0, 1, 0)
+notesText.Font = Enum.Font.SourceSans
+notesText.TextSize = 14
+notesText.TextColor3 = textColor
+notesText.BackgroundTransparency = 1
+notesText.TextWrapped = true
+notesText.TextXAlignment = Enum.TextXAlignment.Left
+notesText.TextYAlignment = Enum.TextYAlignment.Top
+notesText.Parent = scrollFrame
+
+-- Make text label size fit content
+notesText:GetPropertyChangedSignal("TextBounds"):Connect(function()
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, notesText.TextBounds.Y + 10)
+end)
+
 local function showNotification(message)
     local notification = Instance.new("Frame")
     notification.Name = "SpawnNotification"
@@ -287,100 +332,51 @@ local function showNotification(message)
 end
 
 spawnBtn.MouseButton1Click:Connect(function()
-    local petName = petNameBox.Text
-    local weight = tonumber(weightBox.Text) or 1
-    local age = tonumber(ageBox.Text) or 1
-    
-    if petName == "" then
-        showNotification("Please enter a pet name")
-        return
-    end
-    
-    local success, err = pcall(function()
-        Spawner.SpawnPet(petName, weight, age)
-    end)
-    
-    if success then
-        showNotification("Successfully spawned "..petName)
-    else
-        showNotification("Failed to spawn pet: "..tostring(err))
-    end
+    showNotification("Pet spawning functionality has been removed")
 end)
 
 spawnSeedBtn.MouseButton1Click:Connect(function()
-    local seedName = seedNameBox.Text
-    local amount = tonumber(amountBox.Text) or 1
-    
-    if seedName == "" then
-        showNotification("Please enter a seed name")
-        return
-    end
-    
-    local success, err = pcall(function()
-        for i = 1, amount do
-            Spawner.SpawnSeed(seedName)
-            task.wait(0.1)
-        end
-    end)
-    
-    if success then
-        showNotification("Successfully spawned "..amount.." "..seedName..(amount > 1 and " seeds" or " seed"))
-    else
-        showNotification("Failed to spawn seed: "..tostring(err))
-    end
+    showNotification("Seed spawning functionality has been removed")
 end)
 
 spawnEggBtn.MouseButton1Click:Connect(function()
-    local eggName = eggNameBox.Text
-    
-    if eggName == "" then
-        showNotification("Please enter an egg name")
-        return
-    end
-    
-    local success, err = pcall(function()
-        Spawner.SpawnEgg(eggName)
-    end)
-    
-    if success then
-        showNotification("Successfully spawned "..eggName)
-    else
-        showNotification("Failed to spawn egg: "..tostring(err))
-    end
+    showNotification("Egg spawning functionality has been removed")
 end)
 
 spinBtn.MouseButton1Click:Connect(function()
-    local plantName = spinBox.Text
-    
-    if plantName == "" then
-        showNotification("Please enter a plant name")
-        return
-    end
-    
-    local success, err = pcall(function()
-        Spawner.Spin(plantName)
-    end)
-    
-    if success then
-        showNotification("Successfully spun "..plantName)
-    else
-        showNotification("Failed to spin plant: "..tostring(err))
-    end
+    showNotification("Plant spinning functionality has been removed")
 end)
 
 local function switch(tab)
     petTabFrame.Visible = (tab == "pet")
     seedTabFrame.Visible = (tab == "seed")
     eggTabFrame.Visible = (tab == "egg")
+    notesFrame.Visible = (tab == "notes")
     
     petTab.BackgroundColor3 = (tab == "pet") and darkLavender or headerColor
     seedTab.BackgroundColor3 = (tab == "seed") and darkLavender or headerColor
     eggTab.BackgroundColor3 = (tab == "egg") and darkLavender or headerColor
+    
+    -- Toggle notes text visibility
+    if tab == "notes" then
+        scrollFrame.Visible = true
+    else
+        scrollFrame.Visible = false
+    end
 end
 
 petTab.MouseButton1Click:Connect(function() switch("pet") end)
 seedTab.MouseButton1Click:Connect(function() switch("seed") end)
 eggTab.MouseButton1Click:Connect(function() switch("egg") end)
+
+-- NOTES button functionality
+notesBtn.MouseButton1Click:Connect(function()
+    switch("notes")
+end)
+
+backBtn.MouseButton1Click:Connect(function()
+    switch("pet")
+end)
 
 closeBtn.MouseButton1Click:Connect(function() 
     mainFrame.Visible = false 
@@ -394,5 +390,3 @@ switch("pet")
 
 mainFrame.Visible = true
 screenGui.Enabled = true
-
-getgenv().Executed = nil
