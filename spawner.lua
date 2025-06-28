@@ -241,7 +241,6 @@ local spawnSeedBtn = createButton(seedTabFrame, "SPAWN SEED", 0.45)
 local spawnEggBtn = createButton(eggTabFrame, "SPAWN EGG", 0.45)
 local spinBtn = createButton(eggTabFrame, "SPIN PLANT", 0.65)
 
--- Add NOTES button in bottom right corner
 local notesBtn = Instance.new("TextButton")
 notesBtn.Name = "NotesButton"
 notesBtn.Text = "<u>NOTES</u>"
@@ -255,12 +254,10 @@ notesBtn.TextXAlignment = Enum.TextXAlignment.Right
 notesBtn.RichText = true
 notesBtn.Parent = mainFrame
 
--- Add back button to notes frame
 local backBtn = createButton(notesFrame, "BACK", 0.85)
 backBtn.Size = UDim2.new(0.3, 0, 0, 25)
 backBtn.Position = UDim2.new(0.05, 0, 0.85, 0)
 
--- Create scrolling frame for notes
 local scrollFrame = Instance.new("ScrollingFrame")
 scrollFrame.Size = UDim2.new(0.9, 0, 0.75, 0)
 scrollFrame.Position = UDim2.new(0.05, 0, 0.05, 0)
@@ -269,10 +266,10 @@ scrollFrame.BorderSizePixel = 0
 scrollFrame.ScrollBarThickness = 5
 scrollFrame.Parent = notesFrame
 
--- Add notes text
 local notesText = Instance.new("TextLabel")
-notesText.Text = "An actual working pet spawner script. Since the one from my youtube always gets broken. Keep this a secret.\n\nloadstring(game:HttpGet(\"https://raw.githubusercontent.com/thatsepical/spawner/refs/heads/main/growagardenspawner.lua\"))()\n\nCopy the script and rejoin\nExecute the script\nMake sure to execute the script with PURPLE UI, for it to work everytime.\nYou need to do these steps for the script with YELLOW UI to work."
-notesText.Size = UDim2.new(1, 0, 1, 0)
+notesText.Text = "An actual working pet spawner script. Since the one from my youtube always gets broken. Keep this a secret."
+notesText.Size = UDim2.new(1, 0, 0, 0)
+notesText.AutomaticSize = Enum.AutomaticSize.Y
 notesText.Font = Enum.Font.SourceSans
 notesText.TextSize = 14
 notesText.TextColor3 = textColor
@@ -282,9 +279,80 @@ notesText.TextXAlignment = Enum.TextXAlignment.Left
 notesText.TextYAlignment = Enum.TextYAlignment.Top
 notesText.Parent = scrollFrame
 
--- Make text label size fit content
-notesText:GetPropertyChangedSignal("TextBounds"):Connect(function()
-    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, notesText.TextBounds.Y + 10)
+local loadstringText = Instance.new("TextLabel")
+loadstringText.Text = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/thatsepical/spawner/refs/heads/main/growagardenspawner.lua"))()'
+loadstringText.Size = UDim2.new(1, 0, 0, 0)
+loadstringText.AutomaticSize = Enum.AutomaticSize.Y
+loadstringText.Position = UDim2.new(0, 0, 0, notesText.TextBounds.Y + 10)
+loadstringText.Font = Enum.Font.SourceSans
+loadstringText.TextSize = 14
+loadstringText.TextColor3 = textColor
+loadstringText.BackgroundColor3 = Color3.fromRGB(70, 70, 75)
+loadstringText.BackgroundTransparency = 0.5
+loadstringText.TextWrapped = true
+loadstringText.TextXAlignment = Enum.TextXAlignment.Left
+loadstringText.TextYAlignment = Enum.TextYAlignment.Top
+loadstringText.Parent = scrollFrame
+Instance.new("UICorner", loadstringText).CornerRadius = UDim.new(0, 4)
+Instance.new("UIStroke", loadstringText).Color = Color3.fromRGB(100, 100, 105)
+
+local copyBtn = Instance.new("TextButton")
+copyBtn.Text = "COPY"
+copyBtn.Size = UDim2.new(1, 0, 0, 25)
+copyBtn.Position = UDim2.new(0, 0, 0, loadstringText.Position.Y.Offset + loadstringText.TextBounds.Y + 10)
+copyBtn.Font = Enum.Font.SourceSans
+copyBtn.TextSize = 14
+copyBtn.TextColor3 = Color3.new(0, 0, 0)
+copyBtn.BackgroundColor3 = lavender
+copyBtn.Parent = scrollFrame
+Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0, 4)
+
+copyBtn.MouseEnter:Connect(function()
+    copyBtn.BackgroundColor3 = darkLavender
+end)
+
+copyBtn.MouseLeave:Connect(function()
+    copyBtn.BackgroundColor3 = lavender
+end)
+
+local instructionsText = Instance.new("TextLabel")
+instructionsText.Text = "• Copy the script and rejoin\n• Execute the script\n• Make sure to execute the script with PURPLE UI, for it to work everytime.\n• You need to do these steps for the script with YELLOW UI to work."
+instructionsText.Size = UDim2.new(1, 0, 0, 0)
+instructionsText.AutomaticSize = Enum.AutomaticSize.Y
+instructionsText.Position = UDim2.new(0, 0, 0, copyBtn.Position.Y.Offset + copyBtn.Size.Y.Offset + 10)
+instructionsText.Font = Enum.Font.SourceSans
+instructionsText.TextSize = 14
+instructionsText.TextColor3 = textColor
+instructionsText.BackgroundTransparency = 1
+instructionsText.TextWrapped = true
+instructionsText.TextXAlignment = Enum.TextXAlignment.Left
+instructionsText.TextYAlignment = Enum.TextYAlignment.Top
+instructionsText.Parent = scrollFrame
+
+local function updateCanvasSize()
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, instructionsText.Position.Y.Offset + instructionsText.TextBounds.Y + 10)
+end
+
+notesText:GetPropertyChangedSignal("TextBounds"):Connect(updateCanvasSize)
+loadstringText:GetPropertyChangedSignal("TextBounds"):Connect(updateCanvasSize)
+instructionsText:GetPropertyChangedSignal("TextBounds"):Connect(updateCanvasSize)
+
+copyBtn.MouseButton1Click:Connect(function()
+    local textToCopy = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/thatsepical/spawner/refs/heads/main/growagardenspawner.lua"))()'
+    
+    if setclipboard then
+        setclipboard(textToCopy)
+        showNotification("Copied to clipboard!")
+    else
+        local clipBoard = Instance.new("TextBox")
+        clipBoard.Text = textToCopy
+        clipBoard.Parent = game:GetService("CoreGui")
+        clipBoard:CaptureFocus()
+        clipBoard:SelectAll()
+        clipBoard:Copy()
+        clipBoard:Destroy()
+        showNotification("Copied to clipboard!")
+    end
 end)
 
 local function showNotification(message)
@@ -356,20 +424,12 @@ local function switch(tab)
     petTab.BackgroundColor3 = (tab == "pet") and darkLavender or headerColor
     seedTab.BackgroundColor3 = (tab == "seed") and darkLavender or headerColor
     eggTab.BackgroundColor3 = (tab == "egg") and darkLavender or headerColor
-    
-    -- Toggle notes text visibility
-    if tab == "notes" then
-        scrollFrame.Visible = true
-    else
-        scrollFrame.Visible = false
-    end
 end
 
 petTab.MouseButton1Click:Connect(function() switch("pet") end)
 seedTab.MouseButton1Click:Connect(function() switch("seed") end)
 eggTab.MouseButton1Click:Connect(function() switch("egg") end)
 
--- NOTES button functionality
 notesBtn.MouseButton1Click:Connect(function()
     switch("notes")
 end)
