@@ -11,8 +11,8 @@ local isPC = UIS.MouseEnabled
 local uiScale = isPC and 1.15 or 1
 
 local discordBlack = Color3.fromRGB(32, 34, 37)
-local lavender = Color3.fromRGB(180, 140, 235)
-local darkLavender = Color3.fromRGB(160, 120, 215)
+local lavender = Color3.fromRGB(217, 171, 56)
+local darkLavender = Color3.fromRGB(190, 150, 50)
 local headerColor = Color3.fromRGB(47, 49, 54)
 local textColor = Color3.fromRGB(220, 220, 220)
 
@@ -72,7 +72,7 @@ header.Parent = mainFrame
 Instance.new("UICorner", header).CornerRadius = UDim.new(0, 8)
 
 local versionText = Instance.new("TextLabel")
-versionText.Text = "v1.9.4"
+versionText.Text = "v2.0.1"
 versionText.Size = UDim2.new(0, 40, 0, 12)
 versionText.Position = UDim2.new(0, 5, 0, 5)
 versionText.Font = Enum.Font.SourceSans
@@ -158,9 +158,8 @@ closeBtn.Parent = header
 local petTabFrame = Instance.new("Frame")
 local seedTabFrame = Instance.new("Frame")
 local eggTabFrame = Instance.new("Frame")
-local notesFrame = Instance.new("Frame")
 
-for _, f in ipairs({petTabFrame, seedTabFrame, eggTabFrame, notesFrame}) do
+for _, f in ipairs({petTabFrame, seedTabFrame, eggTabFrame}) do
     f.Position = UDim2.new(0, 0, 0, 55)
     f.Size = UDim2.new(1, 0, 1, -55)
     f.BackgroundTransparency = 1
@@ -169,7 +168,6 @@ end
 
 seedTabFrame.Visible = false
 eggTabFrame.Visible = false
-notesFrame.Visible = false
 
 local function createTextBox(parent, placeholder, pos)
     local box = Instance.new("TextBox")
@@ -236,124 +234,56 @@ local function createButton(parent, label, posY)
     return btn
 end
 
+local function createLoadingBar(parent, category)
+    local loadingText = Instance.new("TextLabel")
+    loadingText.Name = "LoadingText"
+    loadingText.Size = UDim2.new(0.9, 0, 0, 15)
+    loadingText.Position = UDim2.new(0.05, 0, 0.75, 0)
+    loadingText.Font = Enum.Font.SourceSans
+    loadingText.TextSize = 12
+    loadingText.TextColor3 = textColor
+    loadingText.BackgroundTransparency = 1
+    loadingText.TextXAlignment = Enum.TextXAlignment.Left
+    loadingText.Visible = false
+    loadingText.Parent = parent
+
+    local loadingBarBg = Instance.new("Frame")
+    loadingBarBg.Name = "LoadingBarBg"
+    loadingBarBg.Size = UDim2.new(0.9, 0, 0, 20)
+    loadingBarBg.Position = UDim2.new(0.05, 0, 0.82, 0)
+    loadingBarBg.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+    loadingBarBg.BorderSizePixel = 0
+    loadingBarBg.Visible = false
+    loadingBarBg.Parent = parent
+
+    local loadingBar = Instance.new("Frame")
+    loadingBar.Name = "LoadingBar"
+    loadingBar.Size = UDim2.new(0, 0, 1, 0)
+    loadingBar.BackgroundColor3 = Color3.fromRGB(50, 205, 50)
+    loadingBar.BorderSizePixel = 0
+    loadingBar.Parent = loadingBarBg
+
+    local loadingPercent = Instance.new("TextLabel")
+    loadingPercent.Name = "LoadingPercent"
+    loadingPercent.Size = UDim2.new(1, 0, 1, 0)
+    loadingPercent.Font = Enum.Font.SourceSansBold
+    loadingPercent.TextSize = 12
+    loadingPercent.TextColor3 = Color3.new(1,1,1)
+    loadingPercent.BackgroundTransparency = 1
+    loadingPercent.Text = "0%"
+    loadingPercent.Parent = loadingBarBg
+
+    return loadingText, loadingBarBg, loadingBar, loadingPercent
+end
+
+local petLoadingText, petLoadingBarBg, petLoadingBar, petLoadingPercent = createLoadingBar(petTabFrame, "PET")
+local seedLoadingText, seedLoadingBarBg, seedLoadingBar, seedLoadingPercent = createLoadingBar(seedTabFrame, "SEED")
+local eggLoadingText, eggLoadingBarBg, eggLoadingBar, eggLoadingPercent = createLoadingBar(eggTabFrame, "EGG")
+
 local spawnBtn = createButton(petTabFrame, "SPAWN PET", 0.65)
 local spawnSeedBtn = createButton(seedTabFrame, "SPAWN SEED", 0.45)
 local spawnEggBtn = createButton(eggTabFrame, "SPAWN EGG", 0.45)
 local spinBtn = createButton(eggTabFrame, "SPIN PLANT", 0.65)
-
-local notesBtn = Instance.new("TextButton")
-notesBtn.Name = "NotesButton"
-notesBtn.Text = "<u>NOTES</u>"
-notesBtn.Size = UDim2.new(0, 60, 0, 20)
-notesBtn.Position = UDim2.new(1, -65, 1, -25)
-notesBtn.Font = Enum.Font.SourceSans
-notesBtn.TextSize = 12
-notesBtn.TextColor3 = textColor
-notesBtn.BackgroundTransparency = 1
-notesBtn.TextXAlignment = Enum.TextXAlignment.Right
-notesBtn.RichText = true
-notesBtn.Parent = mainFrame
-
-local backBtn = createButton(notesFrame, "BACK", 0.85)
-backBtn.Size = UDim2.new(0.3, 0, 0, 25)
-backBtn.Position = UDim2.new(0.05, 0, 0.85, 0)
-
-local scrollFrame = Instance.new("ScrollingFrame")
-scrollFrame.Size = UDim2.new(0.9, 0, 0.75, 0)
-scrollFrame.Position = UDim2.new(0.05, 0, 0.05, 0)
-scrollFrame.BackgroundTransparency = 1
-scrollFrame.BorderSizePixel = 0
-scrollFrame.ScrollBarThickness = 5
-scrollFrame.Parent = notesFrame
-
-local notesText = Instance.new("TextLabel")
-notesText.Text = "An actual working pet spawner script. Since the one from my youtube always gets broken. Keep this a secret."
-notesText.Size = UDim2.new(1, 0, 0, 0)
-notesText.AutomaticSize = Enum.AutomaticSize.Y
-notesText.Font = Enum.Font.SourceSans
-notesText.TextSize = 14
-notesText.TextColor3 = textColor
-notesText.BackgroundTransparency = 1
-notesText.TextWrapped = true
-notesText.TextXAlignment = Enum.TextXAlignment.Left
-notesText.TextYAlignment = Enum.TextYAlignment.Top
-notesText.Parent = scrollFrame
-
-local loadstringText = Instance.new("TextLabel")
-loadstringText.Text = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/thatsepical/spawner/refs/heads/main/growagardenspawner.lua"))()'
-loadstringText.Size = UDim2.new(1, 0, 0, 0)
-loadstringText.AutomaticSize = Enum.AutomaticSize.Y
-loadstringText.Position = UDim2.new(0, 0, 0, notesText.TextBounds.Y + 10)
-loadstringText.Font = Enum.Font.SourceSans
-loadstringText.TextSize = 14
-loadstringText.TextColor3 = textColor
-loadstringText.BackgroundColor3 = Color3.fromRGB(70, 70, 75)
-loadstringText.BackgroundTransparency = 0.5
-loadstringText.TextWrapped = true
-loadstringText.TextXAlignment = Enum.TextXAlignment.Left
-loadstringText.TextYAlignment = Enum.TextYAlignment.Top
-loadstringText.Parent = scrollFrame
-Instance.new("UICorner", loadstringText).CornerRadius = UDim.new(0, 4)
-Instance.new("UIStroke", loadstringText).Color = Color3.fromRGB(100, 100, 105)
-
-local copyBtn = Instance.new("TextButton")
-copyBtn.Text = "COPY"
-copyBtn.Size = UDim2.new(1, 0, 0, 25)
-copyBtn.Position = UDim2.new(0, 0, 0, loadstringText.Position.Y.Offset + loadstringText.TextBounds.Y + 10)
-copyBtn.Font = Enum.Font.SourceSans
-copyBtn.TextSize = 14
-copyBtn.TextColor3 = Color3.new(0, 0, 0)
-copyBtn.BackgroundColor3 = lavender
-copyBtn.Parent = scrollFrame
-Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0, 4)
-
-copyBtn.MouseEnter:Connect(function()
-    copyBtn.BackgroundColor3 = darkLavender
-end)
-
-copyBtn.MouseLeave:Connect(function()
-    copyBtn.BackgroundColor3 = lavender
-end)
-
-local instructionsText = Instance.new("TextLabel")
-instructionsText.Text = "• Copy the script and rejoin\n• Execute the script\n• Make sure to execute the script with PURPLE UI, for it to work everytime.\n• You need to do these steps for the script with YELLOW UI to work."
-instructionsText.Size = UDim2.new(1, 0, 0, 0)
-instructionsText.AutomaticSize = Enum.AutomaticSize.Y
-instructionsText.Position = UDim2.new(0, 0, 0, copyBtn.Position.Y.Offset + copyBtn.Size.Y.Offset + 10)
-instructionsText.Font = Enum.Font.SourceSans
-instructionsText.TextSize = 14
-instructionsText.TextColor3 = textColor
-instructionsText.BackgroundTransparency = 1
-instructionsText.TextWrapped = true
-instructionsText.TextXAlignment = Enum.TextXAlignment.Left
-instructionsText.TextYAlignment = Enum.TextYAlignment.Top
-instructionsText.Parent = scrollFrame
-
-local function updateCanvasSize()
-    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, instructionsText.Position.Y.Offset + instructionsText.TextBounds.Y + 10)
-end
-
-notesText:GetPropertyChangedSignal("TextBounds"):Connect(updateCanvasSize)
-loadstringText:GetPropertyChangedSignal("TextBounds"):Connect(updateCanvasSize)
-instructionsText:GetPropertyChangedSignal("TextBounds"):Connect(updateCanvasSize)
-
-copyBtn.MouseButton1Click:Connect(function()
-    local textToCopy = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/thatsepical/spawner/refs/heads/main/growagardenspawner.lua"))()'
-    
-    if setclipboard then
-        setclipboard(textToCopy)
-        showNotification("Copied to clipboard!")
-    else
-        local clipBoard = Instance.new("TextBox")
-        clipBoard.Text = textToCopy
-        clipBoard.Parent = game:GetService("CoreGui")
-        clipBoard:CaptureFocus()
-        clipBoard:SelectAll()
-        clipBoard:Copy()
-        clipBoard:Destroy()
-        showNotification("Copied to clipboard!")
-    end
-end)
 
 local function showNotification(message)
     local notification = Instance.new("Frame")
@@ -399,27 +329,86 @@ local function showNotification(message)
     end)
 end
 
+local function startLoading(loadingText, loadingBarBg, loadingBar, loadingPercent, name, weight, age, category)
+    local remainingTime = 180
+    loadingText.Text = "Spawning "..name.." ("..(weight or "0").." KG) ("..(age or "0").." Age) in "..math.ceil(remainingTime/60).." minutes"
+    loadingText.Visible = true
+    loadingBarBg.Visible = true
+    
+    local startTime = tick()
+    local duration = remainingTime
+    
+    while tick() - startTime < duration do
+        local progress = (tick() - startTime) / duration
+        loadingBar.Size = UDim2.new(progress, 0, 1, 0)
+        loadingPercent.Text = math.floor(progress * 100).."%"
+        remainingTime = duration - (tick() - startTime)
+        loadingText.Text = "Spawning "..name.." ("..(weight or "0").." KG) ("..(age or "0").." Age) in "..math.ceil(remainingTime/60).." minutes"
+        task.wait()
+    end
+    
+    loadingText.Visible = false
+    loadingBarBg.Visible = false
+    loadingBar.Size = UDim2.new(0, 0, 1, 0)
+end
+
 spawnBtn.MouseButton1Click:Connect(function()
-    showNotification("Pet spawning functionality has been removed")
+    local petName = petNameBox.Text
+    local weight = weightBox.Text
+    local age = ageBox.Text
+    if petName == "" then
+        showNotification("Please enter a pet name")
+        return
+    end
+    spawnBtn.Visible = false
+    task.spawn(function()
+        startLoading(petLoadingText, petLoadingBarBg, petLoadingBar, petLoadingPercent, petName, weight, age, "PET")
+        spawnBtn.Visible = true
+        showNotification("Successfully spawned "..petName)
+    end)
 end)
 
 spawnSeedBtn.MouseButton1Click:Connect(function()
-    showNotification("Seed spawning functionality has been removed")
+    local seedName = seedNameBox.Text
+    if seedName == "" then
+        showNotification("Please enter a seed name")
+        return
+    end
+    spawnSeedBtn.Visible = false
+    task.spawn(function()
+        startLoading(seedLoadingText, seedLoadingBarBg, seedLoadingBar, seedLoadingPercent, seedName, nil, nil, "SEED")
+        spawnSeedBtn.Visible = true
+        showNotification("Successfully spawned "..seedName)
+    end)
 end)
 
 spawnEggBtn.MouseButton1Click:Connect(function()
-    showNotification("Egg spawning functionality has been removed")
+    local eggName = eggNameBox.Text
+    if eggName == "" then
+        showNotification("Please enter an egg name")
+        return
+    end
+    spawnEggBtn.Visible = false
+    task.spawn(function()
+        startLoading(eggLoadingText, eggLoadingBarBg, eggLoadingBar, eggLoadingPercent, eggName, nil, nil, "EGG")
+        spawnEggBtn.Visible = true
+        showNotification("Successfully spawned "..eggName)
+    end)
 end)
 
 spinBtn.MouseButton1Click:Connect(function()
-    showNotification("Plant spinning functionality has been removed")
+    local plantName = spinBox.Text
+    if plantName == "" then
+        showNotification("Please enter a plant name")
+        return
+    end
+    showNotification("Plant spin functionality would go here")
 end)
 
 local function switch(tab)
     petTabFrame.Visible = (tab == "pet")
     seedTabFrame.Visible = (tab == "seed")
     eggTabFrame.Visible = (tab == "egg")
-    notesFrame.Visible = (tab == "notes")
     
     petTab.BackgroundColor3 = (tab == "pet") and darkLavender or headerColor
     seedTab.BackgroundColor3 = (tab == "seed") and darkLavender or headerColor
@@ -429,14 +418,6 @@ end
 petTab.MouseButton1Click:Connect(function() switch("pet") end)
 seedTab.MouseButton1Click:Connect(function() switch("seed") end)
 eggTab.MouseButton1Click:Connect(function() switch("egg") end)
-
-notesBtn.MouseButton1Click:Connect(function()
-    switch("notes")
-end)
-
-backBtn.MouseButton1Click:Connect(function()
-    switch("pet")
-end)
 
 closeBtn.MouseButton1Click:Connect(function() 
     mainFrame.Visible = false 
