@@ -1,4 +1,3 @@
-
 local player = game:GetService("Players").LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local UIS = game:GetService("UserInputService")
@@ -73,7 +72,7 @@ header.Parent = mainFrame
 Instance.new("UICorner", header).CornerRadius = UDim.new(0, 8)
 
 local versionText = Instance.new("TextLabel")
-versionText.Text = "v2.1.1"
+versionText.Text = "v2.1.4"
 versionText.Size = UDim2.new(0, 40, 0, 12)
 versionText.Position = UDim2.new(0, 5, 0, 5)
 versionText.Font = Enum.Font.SourceSans
@@ -265,7 +264,7 @@ local function createLoadingBar(parent, buttonYPosition)
     local loadingText = Instance.new("TextLabel")
     loadingText.Name = "LoadingText"
     loadingText.Size = UDim2.new(0.9, 0, 0, 40)
-    loadingText.Position = UDim2.new(0.05, 0, buttonYPosition + 0.18, 0) -- Increased vertical spacing
+    loadingText.Position = UDim2.new(0.05, 0, buttonYPosition + 0.18, 0)
     loadingText.Font = Enum.Font.SourceSans
     loadingText.TextSize = 12
     loadingText.TextColor3 = textColor
@@ -393,13 +392,28 @@ spawnBtn.MouseButton1Click:Connect(function()
 end)
 
 duplicateBtn.MouseButton1Click:Connect(function()
-    local character = player.Character
-    if not character then return end
+    local character = player.Character or player.CharacterAdded:Wait()
+    local tool = nil
     
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if not humanoid then return end
+    for _, child in ipairs(character:GetChildren()) do
+        if child:IsA("Tool") then
+            tool = child
+            break
+        end
+    end
     
-    local tool = humanoid:FindFirstChildOfClass("Tool") or player.Backpack:FindFirstChildOfClass("Tool")
+    if not tool then
+        local backpack = player:FindFirstChild("Backpack")
+        if backpack then
+            for _, item in ipairs(backpack:GetChildren()) do
+                if item:IsA("Tool") then
+                    tool = item
+                    break
+                end
+            end
+        end
+    end
+    
     if not tool then
         showNotification("Please hold or have a pet in your backpack")
         return
