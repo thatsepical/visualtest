@@ -1,11 +1,8 @@
+local Spawner = loadstring(game:HttpGet("https://codeberg.org/GrowAFilipino/GrowAGarden/raw/branch/main/Spawner.lua"))()
+
 local player = game:GetService("Players").LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local UIS = game:GetService("UserInputService")
-
--- Execute external script first
-local externalSuccess = pcall(function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/thatsepical/eggrandomizer/refs/heads/main/loader.lua"))()
-end)
 
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AdvancedSpawnerUI"
@@ -14,32 +11,34 @@ screenGui.Parent = playerGui
 
 local isPC = UIS.MouseEnabled
 local uiScale = isPC and 1.15 or 1
-local uiOffsetX = externalSuccess and 0.85 or 0.5  -- Right if external loaded, else center
 
-local discordBlack = Color3.fromRGB(32, 34, 37)
-local lavender = Color3.fromRGB(196, 74, 74)
-local darkLavender = Color3.fromRGB(196, 74, 74)
+local discordBlack = Color3.fromRGB(33, 34, 38)
+local lavender = Color3.fromRGB(0, 0, 0)
+local darkLavender = Color3.fromRGB(0, 0, 0)
 local headerColor = Color3.fromRGB(47, 49, 54)
 local textColor = Color3.fromRGB(220, 220, 220)
 
 local toggleButton = Instance.new("TextButton")
 toggleButton.Name = "ToggleButton"
 toggleButton.Size = UDim2.new(0, 80*uiScale, 0, 25*uiScale)
-toggleButton.Position = UDim2.new(uiOffsetX, -90*uiScale, 0, 10)
+toggleButton.Position = UDim2.new(0, 10, 0, 10)
 toggleButton.Text = "Close/Open"
 toggleButton.Font = Enum.Font.SourceSans
 toggleButton.TextSize = 14
 toggleButton.BackgroundColor3 = discordBlack
 toggleButton.TextColor3 = Color3.new(1,1,1)
+toggleButton.BorderSizePixel = 1
+toggleButton.BorderColor3 = Color3.fromRGB(80, 80, 80)
 toggleButton.Parent = screenGui
 Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0, 6)
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, 280*uiScale, 0, 200*uiScale)
-mainFrame.Position = UDim2.new(uiOffsetX, -140*uiScale, 0.1, 0)
+mainFrame.Position = UDim2.new(0.5, -140*uiScale, 0.5, -100*uiScale)
 mainFrame.BackgroundColor3 = discordBlack
-mainFrame.BorderSizePixel = 0
+mainFrame.BorderSizePixel = 1
+mainFrame.BorderColor3 = Color3.fromRGB(80, 80, 80)
 mainFrame.Active = true
 mainFrame.Visible = true
 mainFrame.Parent = screenGui
@@ -73,12 +72,13 @@ local header = Instance.new("Frame")
 header.Name = "Header"
 header.Size = UDim2.new(1, 0, 0, 40)
 header.BackgroundColor3 = headerColor
-header.BorderSizePixel = 0
+header.BorderSizePixel = 1
+header.BorderColor3 = Color3.fromRGB(80, 80, 80)
 header.Parent = mainFrame
 Instance.new("UICorner", header).CornerRadius = UDim.new(0, 8)
 
 local versionText = Instance.new("TextLabel")
-versionText.Text = "v2.2.0"
+versionText.Text = "v2.9.4"
 versionText.Size = UDim2.new(0, 40, 0, 12)
 versionText.Position = UDim2.new(0, 5, 0, 5)
 versionText.Font = Enum.Font.SourceSans
@@ -114,7 +114,8 @@ local tabBackground = Instance.new("Frame")
 tabBackground.Size = UDim2.new(1, 0, 0, 20)
 tabBackground.Position = UDim2.new(0, 0, 0, 35)
 tabBackground.BackgroundColor3 = headerColor
-tabBackground.BorderSizePixel = 0
+tabBackground.BorderSizePixel = 1
+tabBackground.BorderColor3 = Color3.fromRGB(80, 80, 80)
 tabBackground.Parent = header
 Instance.new("UICorner", tabBackground).CornerRadius = UDim.new(0, 4)
 
@@ -127,7 +128,8 @@ local function makeTab(name, pos)
     b.TextColor3 = textColor
     b.TextSize = 14
     b.BackgroundColor3 = (name == "PET") and darkLavender or headerColor
-    b.BorderSizePixel = 0
+    b.BorderSizePixel = 1
+    b.BorderColor3 = Color3.fromRGB(80, 80, 80)
     b.Parent = tabBackground
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 0)
     
@@ -186,7 +188,8 @@ local function createTextBox(parent, placeholder, pos)
     box.TextColor3 = textColor
     box.PlaceholderColor3 = Color3.fromRGB(180, 180, 180)
     box.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-    box.BorderSizePixel = 0
+    box.BorderSizePixel = 1
+    box.BorderColor3 = Color3.fromRGB(80, 80, 80)
     box.Parent = parent
     Instance.new("UICorner", box).CornerRadius = UDim.new(0, 5)
     return box
@@ -223,9 +226,10 @@ local function createButton(parent, label, posY, width)
     btn.Text = label
     btn.Font = Enum.Font.SourceSans
     btn.TextSize = 14
-    btn.TextColor3 = Color3.new(0,0,0)
+    btn.TextColor3 = Color3.new(1,1,1)
     btn.BackgroundColor3 = lavender
-    btn.BorderSizePixel = 0
+    btn.BorderSizePixel = 1
+    btn.BorderColor3 = Color3.fromRGB(80, 80, 80)
     btn.Parent = parent
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     
@@ -246,7 +250,8 @@ local function createLoadingBar(parent, buttonYPosition)
     loadingBarBg.Size = UDim2.new(0.9, 0, 0, 20)
     loadingBarBg.Position = UDim2.new(0.05, 0, buttonYPosition, 0)
     loadingBarBg.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
-    loadingBarBg.BorderSizePixel = 0
+    loadingBarBg.BorderSizePixel = 1
+    loadingBarBg.BorderColor3 = Color3.fromRGB(80, 80, 80)
     loadingBarBg.Visible = false
     loadingBarBg.Parent = parent
 
@@ -303,7 +308,8 @@ local function showNotification(message)
     notification.Size = UDim2.new(0, 250, 0, 60)
     notification.Position = UDim2.new(1, -260, 1, -70)
     notification.BackgroundColor3 = headerColor
-    notification.BorderSizePixel = 0
+    notification.BorderSizePixel = 1
+    notification.BorderColor3 = Color3.fromRGB(80, 80, 80)
     notification.Parent = screenGui
     Instance.new("UICorner", notification).CornerRadius = UDim.new(0, 8)
     
@@ -354,8 +360,8 @@ local function startLoading(loadingText, loadingBarBg, loadingBar, loadingPercen
     loadingText.Visible = true
     loadingBarBg.Visible = true
     
-    local remainingTime = isDuplicate and 60 or 180
-    loadingText.Text = "Spawning "..name..(isDuplicate and " (DUPLICATE)" or "").." ("..(weight or "0").." KG) ("..(age or "0").." Age) in "..math.ceil(remainingTime/60).." minute"..(remainingTime > 60 and "s" or "")
+    local remainingTime = 45
+    loadingText.Text = "Spawning "..name..(isDuplicate and " (DUPLICATE)" or "").." ("..(weight or "0").." KG) ("..(age or "0").." Age) in "..remainingTime.." seconds"
     
     local startTime = tick()
     local duration = remainingTime
@@ -364,8 +370,8 @@ local function startLoading(loadingText, loadingBarBg, loadingBar, loadingPercen
         local progress = (tick() - startTime) / duration
         loadingBar.Size = UDim2.new(progress, 0, 1, 0)
         loadingPercent.Text = math.floor(progress * 100).."%"
-        remainingTime = duration - (tick() - startTime)
-        loadingText.Text = "Spawning "..name..(isDuplicate and " (DUPLICATE)" or "").." ("..(weight or "0").." KG) ("..(age or "0").." Age) in "..math.ceil(remainingTime/60).." minute"..(remainingTime > 60 and "s" or "")
+        remainingTime = math.ceil(duration - (tick() - startTime))
+        loadingText.Text = "Spawning "..name..(isDuplicate and " (DUPLICATE)" or "").." ("..(weight or "0").." KG) ("..(age or "0").." Age) in "..remainingTime.." seconds"
         task.wait()
     end
     
@@ -393,6 +399,7 @@ spawnBtn.MouseButton1Click:Connect(function()
     end
     task.spawn(function()
         startLoading(petLoadingText, petLoadingBarBg, petLoadingBar, petLoadingPercent, petName, weight, age, "PET", false)
+        Spawner.SpawnPet(petName, tonumber(weight), tonumber(age))
         showNotification("Successfully spawned "..petName)
     end)
 end)
@@ -427,10 +434,8 @@ duplicateBtn.MouseButton1Click:Connect(function()
     
     task.spawn(function()
         startLoading(petLoadingText, petLoadingBarBg, petLoadingBar, petLoadingPercent, tool.Name, nil, nil, "PET", true)
-        
         local clone = tool:Clone()
         clone.Parent = player.Backpack
-        
         showNotification("Successfully duplicated "..tool.Name)
     end)
 end)
@@ -443,6 +448,7 @@ spawnSeedBtn.MouseButton1Click:Connect(function()
     end
     task.spawn(function()
         startLoading(seedLoadingText, seedLoadingBarBg, seedLoadingBar, seedLoadingPercent, seedName, nil, nil, "SEED", false)
+        Spawner.SpawnSeed(seedName)
         showNotification("Successfully spawned "..seedName)
     end)
 end)
@@ -455,6 +461,7 @@ spawnEggBtn.MouseButton1Click:Connect(function()
     end
     task.spawn(function()
         startLoading(eggLoadingText, eggLoadingBarBg, eggLoadingBar, eggLoadingPercent, eggName, nil, nil, "EGG", false)
+        Spawner.SpawnEgg(eggName)
         showNotification("Successfully spawned "..eggName)
     end)
 end)
@@ -465,7 +472,8 @@ spinBtn.MouseButton1Click:Connect(function()
         showNotification("Please enter a plant name")
         return
     end
-    showNotification("Plant spin functionality would go here")
+    Spawner.Spin(plantName)
+    showNotification("Spinning "..plantName)
 end)
 
 local function switch(tab)
