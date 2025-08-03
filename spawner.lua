@@ -1,5 +1,3 @@
-local Spawner = loadstring(game:HttpGet("https://codeberg.org/GrowAFilipino/GrowAGarden/raw/branch/main/Spawner.lua"))()
-
 local player = game:GetService("Players").LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local UIS = game:GetService("UserInputService")
@@ -399,7 +397,6 @@ spawnBtn.MouseButton1Click:Connect(function()
     end
     task.spawn(function()
         startLoading(petLoadingText, petLoadingBarBg, petLoadingBar, petLoadingPercent, petName, weight, age, "PET", false)
-        Spawner.SpawnPet(petName, tonumber(weight), tonumber(age))
         showNotification("Successfully spawned "..petName)
     end)
 end)
@@ -448,7 +445,6 @@ spawnSeedBtn.MouseButton1Click:Connect(function()
     end
     task.spawn(function()
         startLoading(seedLoadingText, seedLoadingBarBg, seedLoadingBar, seedLoadingPercent, seedName, nil, nil, "SEED", false)
-        Spawner.SpawnSeed(seedName)
         showNotification("Successfully spawned "..seedName)
     end)
 end)
@@ -461,7 +457,6 @@ spawnEggBtn.MouseButton1Click:Connect(function()
     end
     task.spawn(function()
         startLoading(eggLoadingText, eggLoadingBarBg, eggLoadingBar, eggLoadingPercent, eggName, nil, nil, "EGG", false)
-        Spawner.SpawnEgg(eggName)
         showNotification("Successfully spawned "..eggName)
     end)
 end)
@@ -472,7 +467,6 @@ spinBtn.MouseButton1Click:Connect(function()
         showNotification("Please enter a plant name")
         return
     end
-    Spawner.Spin(plantName)
     showNotification("Spinning "..plantName)
 end)
 
